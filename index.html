@@ -88,7 +88,7 @@
     .s-protein{font-size:0.6rem;color:var(--accent);background:rgba(0,212,255,0.1);
       padding:2px 6px;border-radius:8px;border:1px solid rgba(0,212,255,0.2);display:inline-block;margin-bottom:4px;}
     .s-protein.hidden{display:none;}
-    .s-limits{font-size:1.00rem;color:var(--muted);margin-bottom:4px;}
+    .s-limits{font-size:1rem;color:var(--muted);margin-bottom:4px;}
     .s-limits strong{color:var(--text);}
     .s-bar{height:25px;background:var(--bg);border-radius:2px;overflow:hidden;margin-bottom:6px;}
     .s-bar-fill{height:100%;border-radius:2px;transition:width 0.5s;width:0%;}
@@ -211,7 +211,20 @@
 
     .footer{text-align:center;padding:14px;font-size:0.6rem;color:var(--muted);}
 
-    @media(min-width:500px){
+    /* OVEN TAB */
+    .oven-container{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:16px;}
+    .oven-header h2{font-size:1.1rem;color:var(--accent);margin-bottom:4px;}
+    .sensor-box h3{font-size:0.9rem;margin-bottom:6px;color:var(--muted);}
+    .temp-value{font-size:2.2rem;font-weight:700;margin-bottom:8px;color:#ff5722;}
+    .motor-controls h3{font-size:0.9rem;margin-bottom:8px;color:var(--muted);}
+    .motor-controls label{display:block;font-size:0.75rem;color:var(--muted);margin-top:6px;margin-bottom:2px;}
+    .motor-controls input[type=range]{width:100%;}
+    .mode-buttons{display:flex;gap:8px;margin-top:10px;}
+    .mode-buttons button{flex:1;padding:8px 10px;border:none;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer;background:var(--accent);color:#0a0e17;}
+    .mode-buttons button:nth-child(2){background:var(--bg);color:var(--muted);border:1px solid var(--border);}
+    .mode-buttons button:nth-child(2):hover{color:var(--text);border-color:var(--accent);}
+
+    @media(min-width:100px){
       .sensors-grid{grid-template-columns:repeat(4,1fr);}
       .s-value{font-size:2.6rem;}
     }
@@ -221,7 +234,7 @@
 
   <!-- HERO -->
   <div class="hero">
-    <h1>&#128293; <span class="r">Cesar's</span> <span class="w">BBQ</span> &#128293;</h1>
+    <h1>🔥 <span class="r">Cesar's</span> <span class="w">BBQ</span> 🔥</h1>
     <p>Dashboard IoT Mobile</p>
   </div>
 
@@ -231,30 +244,31 @@
     <div class="status-item"><span class="dot off" id="dotBle"></span> BLE: <strong id="bleSt">Off</strong></div>
     <div class="status-item"><span class="dot off" id="dotWifi"></span> WiFi: <strong id="wifiSt">--</strong></div>
     <div class="status-item">TX: <strong id="msgCount">0</strong></div>
-    <div class="status-item">&#128337; <strong id="lastTime">--:--</strong></div>
+    <div class="status-item">🕓 <strong id="lastTime">--:--</strong></div>
   </div>
 
   <!-- TABS -->
   <div class="tabs">
-    <button class="tab active" onclick="showTab('monitor')"><span class="tab-icon">&#127777;</span>Monitor</button>
-    <button class="tab" onclick="showTab('connect')"><span class="tab-icon">&#128268;</span>Conexion</button>
-    <button class="tab" onclick="showTab('settings')"><span class="tab-icon">&#9881;</span>Ajustes</button>
-    <button class="tab" onclick="showTab('chart')"><span class="tab-icon">&#128200;</span>Grafica</button>
-    <button class="tab" onclick="showTab('log')"><span class="tab-icon">&#128203;</span>Log</button>
+    <button class="tab active" onclick="showTab('monitor')"><span class="tab-icon">🌡️</span>Monitor</button>
+    <button class="tab" onclick="showTab('connect')"><span class="tab-icon">🔌</span>Conexion</button>
+    <button class="tab" onclick="showTab('settings')"><span class="tab-icon">⚙</span>Ajustes</button>
+    <button class="tab" onclick="showTab('chart')"><span class="tab-icon">📈</span>Grafica</button>
+    <button class="tab" onclick="showTab('log')"><span class="tab-icon">📃</span>Log</button>
+    <button class="tab" onclick="showTab('oven')"><span class="tab-icon">🍽️</span>OVEN</button>
   </div>
 
-  <!-- ════════ MONITOR TAB ════════ -->
+  <!-- MONITOR TAB -->
   <div class="panel active" id="panelMonitor">
     <div class="sensors-grid" id="sensorsGrid"></div>
   </div>
 
-  <!-- ════════ CONNECT TAB ════════ -->
+  <!-- CONNECT TAB -->
   <div class="panel" id="panelConnect">
 
     <!-- BLE -->
     <div class="conn-section">
-      <h3>&#128309; Bluetooth Low Energy (BLE)</h3>
-      <button class="btn btn-ble" id="btnBle" onclick="toggleBLE()">&#128268; Conectar BLE</button>
+      <h3>🔹 Bluetooth Low Energy (BLE)</h3>
+      <button class="btn btn-ble" id="btnBle" onclick="toggleBLE()">🔌 Conectar BLE</button>
       <div class="ble-note">
         Conecta directamente al ESP32 sin WiFi mediante Bluetooth.<br>
         Requiere <strong>Abrir en Chrome en Android</strong>. Nombre: <strong>CesarBBQ</strong>
@@ -263,11 +277,11 @@
 
     <!-- BLE Terminal -->
     <div class="ble-terminal" id="bleTerminal" style="display:none">
-      <h3>&#128309; Terminal BLE</h3>
+      <h3>🔹 Terminal BLE</h3>
       <div class="ble-output" id="bleOutput"></div>
       <div class="ble-input-row">
         <input class="ble-input" id="bleInput" placeholder="Comando..." onkeydown="if(event.key==='Enter')sendBLECmd()">
-        <button class="btn-send" onclick="sendBLECmd()">&#10148;</button>
+        <button class="btn-send" onclick="sendBLECmd()">➤</button>
       </div>
       <div class="ble-quick">
         <button onclick="sendBLEQuick('status')">status</button>
@@ -281,37 +295,37 @@
 
     <!-- WIFI PROVISIONING -->
     <div class="wifi-section" id="wifiSection">
-      <h3>&#128246; WiFi Provisioning (via BLE)</h3>
+      <h3>📶 WiFi Provisioning (via BLE)</h3>
       <div class="conn-field">
         <label>SSID (Nombre de Red)</label>
         <input type="text" id="wifiSSID" placeholder="Nombre de tu red WiFi" autocomplete="off">
       </div>
       <div class="conn-field psw-toggle">
         <label>Password</label>
-        <input type="password" id="wifiPSW" placeholder="Contrase&#241;a WiFi" autocomplete="off">
-        <button class="psw-eye" onclick="togglePswVis()" type="button">&#128065;</button>
+        <input type="password" id="wifiPSW" placeholder="Contraseña WiFi" autocomplete="off">
+        <button class="psw-eye" onclick="togglePswVis()" type="button">👁️</button>
       </div>
       <div class="wifi-row">
-        <button class="btn-wifi btn-wifi-connect" id="btnWifiConnect" onclick="wifiConnect()" disabled>&#128268; Conectar WiFi</button>
+        <button class="btn-wifi btn-wifi-connect" id="btnWifiConnect" onclick="wifiConnect()" disabled>🔌 Conectar WiFi</button>
       </div>
       <div class="wifi-row">
-        <button class="btn-wifi btn-wifi-scan" onclick="wifiScan()" id="btnWifiScan" disabled>&#128270; Escanear Redes</button>
-        <button class="btn-wifi btn-wifi-status" onclick="wifiStatus()" id="btnWifiStatus" disabled>&#128220; Estado WiFi</button>
+        <button class="btn-wifi btn-wifi-scan" onclick="wifiScan()" id="btnWifiScan" disabled>🔍 Escanear Redes</button>
+        <button class="btn-wifi btn-wifi-status" onclick="wifiStatus()" id="btnWifiStatus" disabled>📄 Estado WiFi</button>
       </div>
       <div class="wifi-row">
-        <button class="btn-wifi btn-wifi-clear" onclick="wifiClear()" id="btnWifiClear" disabled>&#128465; Borrar Credenciales</button>
+        <button class="btn-wifi btn-wifi-clear" onclick="wifiClear()" id="btnWifiClear" disabled>🗑 Borrar Credenciales</button>
       </div>
       <div class="wifi-scan-results" id="wifiScanResults"></div>
       <div class="wifi-status-box" id="wifiStatusBox"></div>
       <div class="ble-note" style="border-left-color:#ff9800;background:rgba(255,152,0,0.08);margin-top:10px">
-        &#9888;&#65039; Requiere <strong>conexi&#243;n BLE activa</strong>. Primero conecta Bluetooth arriba.<br>
+        ⚠️ Requiere <strong>conexión BLE activa</strong>. Primero conecta Bluetooth arriba.<br>
         Las credenciales se guardan en la <strong>memoria flash</strong> del ESP32 y sobreviven reinicios.
       </div>
     </div>
 
     <!-- MQTT -->
     <div class="conn-section">
-      <h3>&#128225; MQTT (WiFi/Internet)</h3>
+      <h3>📡 MQTT (WiFi/Internet)</h3>
       <div class="conn-field">
         <label>Broker</label>
         <input type="text" id="brokerUrl" value="wss://broker.hivemq.com:8884/mqtt">
@@ -324,73 +338,107 @@
     </div>
   </div>
 
-  <!-- ════════ SETTINGS TAB ════════ -->
+  <!-- SETTINGS TAB -->
   <div class="panel" id="panelSettings">
 
     <!-- Unit Toggle -->
     <div class="setting-group">
-      <h3>&#127777; Unidad de Temperatura</h3>
+      <h3>🌡️ Unidad de Temperatura</h3>
       <div class="unit-toggle">
-        <button class="unit-btn active" id="btnC" onclick="setUnit('C')">&#176;C Celsius</button>
-        <button class="unit-btn" id="btnF" onclick="setUnit('F')">&#176;F Fahrenheit</button>
+        <button class="unit-btn active" id="btnC" onclick="setUnit('C')">°C Celsius</button>
+        <button class="unit-btn" id="btnF" onclick="setUnit('F')">°F Fahrenheit</button>
       </div>
     </div>
 
     <!-- Protein -->
     <div class="setting-group">
-      <h3>&#129385; Perfil de Proteina</h3>
+      <h3>🥩 Perfil de Proteina</h3>
       <select class="protein-select" id="proteinSel" onchange="onProteinChange()">
         <option value="custom">-- Personalizado --</option>
-        <option value="res_mr">Res (Medio Rojo) — 57-63 &#176;C — 134.6-145.4 &#176;F</option>
-        <option value="res_mp">Res (Medio) — 63-68 &#176;C — 145.4-154.4 &#176;F</option>
-        <option value="res_mw">Res (Medium-Well) — 66-71 &#176;C — 150.8-159.8 &#176;F</option>
-        <option value="res_bc">Res (Bien Cocida) — 71-77 &#176;C — 159.8-170.6 &#176;F</option>
-        <option value="pollo">Pollo — 74-85 &#176;C — 165.2-185.0 &#176;F</option>
-        <option value="cerdo">Cerdo — 63-74 &#176;C — 145.4-165.2 &#176;F</option>
-        <option value="pescado">Pescado — 63-68 &#176;C — 145.4-154.4 &#176;F</option>
-        <option value="marisco">Mariscos — 63-74 &#176;C — 145.4-165.2 &#176;F</option>
-        <option value="pan">Pan / Reposteria — 88-96 &#176;C — 190.4-204.8 &#176;F</option>
-        <option value="oven">&#127859; OVEN (Horno) — 150-260 &#176;C — 302.0-500.0 &#176;F</option>
+        <option value="res_mr">Res (Medio Rojo) — 57-63 °C — 134.6-145.4 °F</option>
+        <option value="res_mp">Res (Medio) — 63-68 °C — 145.4-154.4 °F</option>
+        <option value="res_mw">Res (Medium-Well) — 66-71 °C — 150.8-159.8 °F</option>
+        <option value="res_bc">Res (Bien Cocida) — 71-77 °C — 159.8-170.6 °F</option>
+        <option value="pollo">Pollo — 74-85 °C — 165.2-185.0 °F</option>
+        <option value="cerdo">Cerdo — 63-74 °C — 145.4-165.2 °F</option>
+        <option value="pescado">Pescado — 63-68 °C — 145.4-154.4 °F</option>
+        <option value="marisco">Mariscos — 63-74 °C — 145.4-165.2 °F</option>
+        <option value="pan">Pan / Reposteria — 88-96 °C — 190.4-204.8 °F</option>
+        <option value="oven">🍽 OVEN (Horno) — 150-260 °C — 302.0-500.0 °F</option>
       </select>
       <div class="protein-info" id="proteinInfo">Selecciona un perfil y aplica a cada zona.</div>
     </div>
 
     <!-- Limits -->
     <div class="setting-group">
-      <h3>&#127777; Limites por Zona</h3>
+      <h3>🌡️ Limites por Zona</h3>
       <div id="limitsContainer"></div>
-      <button class="btn btn-mqtt" style="margin-top:10px" onclick="applyManualLimits()">&#10003; Aplicar Limites Manuales</button>
+      <button class="btn btn-mqtt" style="margin-top:10px" onclick="applyManualLimits()">✔ Aplicar Limites Manuales</button>
     </div>
 
     <!-- Actions -->
     <div class="setting-group">
-      <h3>&#128190; Acciones</h3>
-      <button class="btn btn-mqtt" onclick="downloadCSV()">&#128190; Descargar CSV</button>
-      <button class="btn btn-small" style="width:100%;margin-top:8px" onclick="resetAll()">&#128260; Reset Min/Max y Grafica</button>
+      <h3>💾 Acciones</h3>
+      <button class="btn btn-mqtt" onclick="downloadCSV()">💾 Descargar CSV</button>
+      <button class="btn btn-small" style="width:100%;margin-top:8px" onclick="resetAll()">🔄 Reset Min/Max y Grafica</button>
     </div>
   </div>
 
-  <!-- ════════ CHART TAB ════════ -->
+  <!-- CHART TAB -->
   <div class="panel" id="panelChart">
     <div class="chart-container">
       <div class="chart-header">
-        <h3>&#128200; Historial</h3>
+        <h3>📈 Historial</h3>
         <button class="btn-small" onclick="resetAll()">Limpiar</button>
       </div>
       <canvas id="tempChart"></canvas>
     </div>
   </div>
 
-  <!-- ════════ LOG TAB ════════ -->
+  <!-- LOG TAB -->
   <div class="panel" id="panelLog">
     <div class="log-container">
       <div class="log-header">
-        <h3>&#128203; Log</h3>
+        <h3>📃 Log</h3>
         <button class="btn-small" onclick="clearLog()">Limpiar</button>
       </div>
       <div class="log-list" id="logList">
         <div><span class="log-time">[Inicio]</span> Dashboard mobile listo.</div>
       </div>
+    </div>
+  </div>
+
+  <!-- OVEN TAB -->
+  <div class="panel" id="panelOven">
+    <div class="oven-container">
+
+      <div class="oven-header">
+        <h2>Oven Control</h2>
+      </div>
+
+      <!-- Monitor de temperatura -->
+      <div class="sensor-box">
+        <h3>Oven Temperature</h3>
+        <div id="oven-temp-display" class="temp-value">---</div>
+        <canvas id="ovenChart" width="300" height="150"></canvas>
+      </div>
+
+      <!-- Controles de motores -->
+      <div class="motor-controls">
+        <h3>Airflow Motors</h3>
+
+        <label for="servoInRange">Servo In (Air Intake):</label>
+        <input type="range" min="0" max="180" id="servoInRange">
+
+        <label for="servoOutRange">Servo Out (Exhaust):</label>
+        <input type="range" min="0" max="180" id="servoOutRange">
+
+        <div class="mode-buttons">
+          <button id="autoModeBtn">Auto Mode</button>
+          <button id="manualModeBtn">Manual Mode</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -427,18 +475,19 @@ var profiles={
 };
 
 // ═══════════════════ UTILS ═══════════════════
-function cToF(c){return(c*9/5)+32;} function fToC(f){return(f-32)*5/9;}
+function cToF(c){return(c*9/5)+32;} 
+function fToC(f){return(f-32)*5/9;}
 function dT(c){return unit==='F'?cToF(c).toFixed(1):c.toFixed(1);}
-function uS(){return unit==='F'?'\u00B0F':'\u00B0C';}
+function uS(){return unit==='F'?'°F':'°C';}
 function fmtTime(d){return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')+':'+d.getSeconds().toString().padStart(2,'0');}
 
 // ═══════════════════ TABS ═══════════════════
 function showTab(name){
   var tabs=document.querySelectorAll('.tab'), panels=document.querySelectorAll('.panel');
-  var map={monitor:'panelMonitor',connect:'panelConnect',settings:'panelSettings',chart:'panelChart',log:'panelLog'};
-  tabs.forEach(function(t,i){t.classList.remove('active');});
+  var map={monitor:'panelMonitor',connect:'panelConnect',settings:'panelSettings',chart:'panelChart',log:'panelLog',oven:'panelOven'};
+  tabs.forEach(function(t){t.classList.remove('active');});
   panels.forEach(function(p){p.classList.remove('active');});
-  var names=['monitor','connect','settings','chart','log'];
+  var names=['monitor','connect','settings','chart','log','oven'];
   var idx=names.indexOf(name);
   if(idx>=0)tabs[idx].classList.add('active');
   document.getElementById(map[name]).classList.add('active');
@@ -452,12 +501,12 @@ function buildCards(){
   for(var i=0;i<4;i++){
     g.innerHTML+=
       '<div class="sensor-card">'+
-        '<div class="s-label">\u25C6 '+ZONES[i]+'</div>'+
+        '<div class="s-label">◆ '+ZONES[i]+'</div>'+
         '<div class="s-value" id="v'+(i+1)+'">--.-</div>'+
         '<div class="s-unit" id="u'+(i+1)+'">'+uS()+'</div>'+
-        '<div class="s-alarm a-ok" id="a'+(i+1)+'">\u2713 OK</div><br>'+
+        '<div class="s-alarm a-ok" id="a'+(i+1)+'">✓ OK</div><br>'+
         '<div class="s-protein hidden" id="sp'+(i+1)+'"></div>'+
-        '<div class="s-limits" id="sl'+(i+1)+'">Lim: <strong>'+dT(limits[i].min)+' \u2014 '+dT(limits[i].max)+'</strong> '+uS()+'</div>'+
+        '<div class="s-limits" id="sl'+(i+1)+'">Lim: <strong>'+dT(limits[i].min)+' — '+dT(limits[i].max)+'</strong> '+uS()+'</div>'+
         '<div class="s-bar"><div class="s-bar-fill" id="b'+(i+1)+'"></div></div>'+
         '<div class="s-minmax"><span>Min:<span class="mn" id="mn'+(i+1)+'">--</span></span><span>Max:<span class="mx" id="mx'+(i+1)+'">--</span></span></div>'+
       '</div>';
@@ -479,7 +528,7 @@ function buildLimits(){
         '<span style="color:var(--muted);font-size:0.65rem">Max</span>'+
         '<input type="number" class="limit-input" id="lx'+(i+1)+'" value="'+(Math.round(mx*10)/10)+'" step="0.5">'+
         '<span style="font-size:0.65rem;color:var(--muted)">'+uS()+'</span>'+
-        '<button class="btn-apply-sensor" onclick="applyProteinToSensor('+i+')">\u{1F969}</button>'+
+        '<button class="btn-apply-sensor" onclick="applyProteinToSensor('+i+')">🥩</button>'+
         '<span class="protein-tag" id="pt'+(i+1)+'" style="display:'+(sensorProtein[i]?'inline':'none')+'">'+
           (sensorProtein[i]||'')+
         '</span>'+
@@ -495,7 +544,7 @@ function setUnit(u){
   buildLimits();
   refreshCards();
   updateChartUnit();
-  addLog('\u{1F321} Unidad: '+uS(),'warn');
+  addLog('🌡 Unidad: '+uS(),'warn');
 }
 
 // ═══════════════════ PROTEIN ═══════════════════
@@ -503,19 +552,19 @@ function onProteinChange(){
   var sel=document.getElementById('proteinSel').value;
   var p=profiles[sel], info=document.getElementById('proteinInfo');
   if(!p){info.textContent='Modo personalizado.';return;}
-  info.innerHTML=p.info+'<br><strong style="color:var(--accent)">\u2191 Pulsa \u{1F969} en cada zona para aplicar.</strong>';
+  info.innerHTML=p.info+'<br><strong style="color:var(--accent)">↑ Pulsa 🥩 en cada zona para aplicar.</strong>';
 }
 function applyProteinToSensor(idx){
   var sel=document.getElementById('proteinSel').value;
   var p=profiles[sel];
-  if(!p){addLog('\u26A0 Selecciona una proteina','warn');return;}
+  if(!p){addLog('⚠ Selecciona una proteina','warn');return;}
   limits[idx].min=p.min; limits[idx].max=p.max;
   var selectEl=document.getElementById('proteinSel');
   sensorProtein[idx]=selectEl.options[selectEl.selectedIndex].text;
   buildLimits(); refreshLimDisp(); refreshAlarms();
   var cp=document.getElementById('sp'+(idx+1));
-  cp.textContent='\u{1F969} '+sensorProtein[idx]; cp.className='s-protein';
-  addLog('\u{1F969} '+ZONES[idx]+' \u2192 '+sensorProtein[idx],'success');
+  cp.textContent='🥩 '+sensorProtein[idx]; cp.className='s-protein';
+  addLog('🥩 '+ZONES[idx]+' → '+sensorProtein[idx],'success');
 }
 function applyManualLimits(){
   for(var i=0;i<4;i++){
@@ -525,7 +574,7 @@ function applyManualLimits(){
     limits[i].max=unit==='F'?fToC(mx):mx;
   }
   refreshLimDisp(); refreshAlarms();
-  addLog('\u2705 Limites actualizados','success');
+  addLog('✅ Limites actualizados','success');
 }
 
 // ═══════════════════ REFRESH ═══════════════════
@@ -544,7 +593,7 @@ function refreshCards(){
 function refreshLimDisp(){
   for(var i=0;i<4;i++){
     var el=document.getElementById('sl'+(i+1));
-    if(el)el.innerHTML='Lim: <strong>'+dT(limits[i].min)+' \u2014 '+dT(limits[i].max)+'</strong> '+uS();
+    if(el)el.innerHTML='Lim: <strong>'+dT(limits[i].min)+' — '+dT(limits[i].max)+'</strong> '+uS();
   }
 }
 function refreshAlarms(){
@@ -557,9 +606,9 @@ function refreshAlarms(){
 function updateAlarm(idx,c){
   var el=document.getElementById('a'+idx), lim=limits[idx-1];
   var dmn=dT(lim.min), dmx=dT(lim.max);
-  if(c<lim.min){el.className='s-alarm a-warn';el.textContent='\u25BC BAJA ('+dmn+uS()+')';}
-  else if(c>lim.max){el.className='s-alarm a-danger';el.textContent='\u25B2 ALTA ('+dmx+uS()+')';}
-  else{el.className='s-alarm a-ok';el.textContent='\u2713 OK';}
+  if(c<lim.min){el.className='s-alarm a-warn';el.textContent='▼ BAJA ('+dmn+uS()+')';}
+  else if(c>lim.max){el.className='s-alarm a-danger';el.textContent='▲ ALTA ('+dmx+uS()+')';}
+  else{el.className='s-alarm a-ok';el.textContent='✓ OK';}
 }
 
 // ═══════════════════ UPDATE SENSORS ═══════════════════
@@ -627,19 +676,24 @@ function updateChartUnit(){
     chart.data.labels.push(r.time);
     for(var d=0;d<4;d++){var v=r['s'+(d+1)];chart.data.datasets[d].data.push(unit==='F'?cToF(v):v);}
   }
-  chart.update('none');
+  chart.update();
 }
+
 function resetAll(){
   chart.data.labels=[];chart.data.datasets.forEach(function(ds){ds.data=[];});chart.update();
   sMin=[Infinity,Infinity,Infinity,Infinity];sMax=[-Infinity,-Infinity,-Infinity,-Infinity];csvData=[];
-  for(var i=1;i<=4;i++){document.getElementById('mn'+i).textContent='--';document.getElementById('mx'+i).textContent='--';
-    document.getElementById('a'+i).className='s-alarm a-ok';document.getElementById('a'+i).textContent='\u2713 OK';}
-  addLog('\u{1F504} Reset completo','warn');
+  for(var i=1;i<=4;i++){
+    document.getElementById('mn'+i).textContent='--';
+    document.getElementById('mx'+i).textContent='--';
+    document.getElementById('a'+i).className='s-alarm a-ok';
+    document.getElementById('a'+i).textContent='✓ OK';
+  }
+  addLog('🔄 Reset completo','warn');
 }
 
 // ═══════════════════ CSV ═══════════════════
 function downloadCSV(){
-  if(!csvData.length){addLog('\u26A0 Sin datos','warn');return;}
+  if(!csvData.length){addLog('⚠ Sin datos','warn');return;}
   var ul=unit==='F'?'F':'C';
   var h='Fecha,Hora,ZonaA('+ul+'),ZonaB('+ul+'),ZonaC('+ul+'),ZonaD('+ul+'),Alarm_A,Alarm_B,Alarm_C,Alarm_D';
   var lines=[h];
@@ -656,40 +710,62 @@ function downloadCSV(){
   var blob=new Blob([lines.join('\n')],{type:'text/csv'}),a=document.createElement('a');
   a.href=URL.createObjectURL(blob);a.download='cesars_bbq_'+new Date().toISOString().slice(0,10)+'.csv';
   a.click();URL.revokeObjectURL(a.href);
-  addLog('\u{1F4BE} CSV: '+csvData.length+' registros','success');
+  addLog('💾 CSV: '+csvData.length+' registros','success');
 }
 
 // ═══════════════════ MQTT ═══════════════════
 function toggleMQTT(){if(isMqtt)disconnectMQTT();else connectMQTT();}
 function connectMQTT(){
   var url=document.getElementById('brokerUrl').value.trim(), topic=document.getElementById('topic').value.trim();
-  if(!url||!topic){addLog('\u274C Ingresa Broker y Topico','error');return;}
+  if(!url||!topic){addLog('❌ Ingresa Broker y Topico','error');return;}
   addLog('Conectando MQTT...','');
   try{
     mqttClient=mqtt.connect(url,{clientId:'bbq_'+Math.random().toString(16).substr(2,8),clean:true,connectTimeout:10000,reconnectPeriod:5000});
     mqttClient.on('connect',function(){
       isMqtt=true;updSt();
-      addLog('\u2705 MQTT conectado','success');
-      mqttClient.subscribe(topic,function(e){if(!e)addLog('\u{1F4E1} Suscrito: '+topic,'success');});
+      addLog('✅ MQTT conectado','success');
+      mqttClient.subscribe(topic,function(e){if(!e)addLog('📡 Suscrito: '+topic,'success');});
+      // Suscripción al horno
+      mqttClient.subscribe("cesar/esp32/oven");
     });
     mqttClient.on('message',function(t,m){
-      try{var d=JSON.parse(m.toString());handleData(d);}catch(e){addLog('\u26A0 Mensaje invalido','warn');}
+      // OVEN SENSOR
+      if (t === "cesar/esp32/oven") {
+        var temp = parseFloat(m.toString());
+        if(!isNaN(temp)){
+          document.getElementById("oven-temp-display").innerText = temp.toFixed(1) + "°C";
+          updateOvenChart(temp);
+        }
+        return;
+      }
+      // JSON NORMAL (4 sondas)
+      try{
+        var d=JSON.parse(m.toString());
+        handleData(d);
+      }catch(e){
+        addLog('⚠ Mensaje invalido','warn');
+      }
     });
-    mqttClient.on('error',function(e){addLog('\u274C Error: '+e.message,'error');});
-    mqttClient.on('close',function(){if(isMqtt){isMqtt=false;updSt();addLog('\u{1F50C} MQTT cerrado','warn');}});
-  }catch(e){addLog('\u274C '+e.message,'error');}
+    mqttClient.on('error',function(e){addLog('❌ Error: '+e.message,'error');});
+    mqttClient.on('close',function(){if(isMqtt){isMqtt=false;updSt();addLog('🔌 MQTT cerrado','warn');}});
+  }catch(e){addLog('❌ '+e.message,'error');}
 }
-function disconnectMQTT(){if(mqttClient){mqttClient.end(true);mqttClient=null;}isMqtt=false;updSt();addLog('\u{1F50C} MQTT desconectado','');}
+function disconnectMQTT(){
+  if(mqttClient){mqttClient.end(true);mqttClient=null;}
+  isMqtt=false;updSt();addLog('🔌 MQTT desconectado','');
+}
 
 // ═══════════════════ BLE ═══════════════════
 async function toggleBLE(){if(isBle)disconnectBLE();else await connectBLE();}
 async function connectBLE(){
-  if(!navigator.bluetooth){addLog('\u274C Tu navegador no soporta Web Bluetooth. Usa Chrome en Android.','error');return;}
+  if(!navigator.bluetooth){addLog('❌ Tu navegador no soporta Web Bluetooth. Usa Chrome en Android.','error');return;}
   try{
-    addLog('\u{1F50E} Buscando CesarBBQ...','');
+    addLog('🔎 Buscando CesarBBQ...','');
     bleDevice=await navigator.bluetooth.requestDevice({filters:[{services:[NUS_SVC]}],optionalServices:[NUS_SVC]});
-    bleDevice.addEventListener('gattserverdisconnected',function(){isBle=false;updSt();addLog('\u{1F50C} BLE desconectado','warn');
-      document.getElementById('bleTerminal').style.display='none';});
+    bleDevice.addEventListener('gattserverdisconnected',function(){
+      isBle=false;updSt();addLog('🔌 BLE desconectado','warn');
+      document.getElementById('bleTerminal').style.display='none';
+    });
     addLog('Conectando GATT...','');
     var server=await bleDevice.gatt.connect();
     var svc=await server.getPrimaryService(NUS_SVC);
@@ -709,11 +785,11 @@ async function connectBLE(){
     });
     isBle=true;updSt();
     document.getElementById('bleTerminal').style.display='block';
-    addLog('\u2705 BLE conectado a CesarBBQ','success');
+    addLog('✅ BLE conectado a CesarBBQ','success');
     addBleLog('Conectado. Escribe un comando o usa los botones rapidos.','#00e676');
   }catch(e){
-    if(e.name!=='NotFoundError')addLog('\u274C BLE: '+e.message,'error');
-    else addLog('\u26A0 Busqueda cancelada','warn');
+    if(e.name!=='NotFoundError')addLog('❌ BLE: '+e.message,'error');
+    else addLog('⚠ Busqueda cancelada','warn');
   }
 }
 function disconnectBLE(){
@@ -741,7 +817,6 @@ function sendBLECmd(){
 function sendBLEQuick(cmd){addBleLog('> '+cmd,'#00d4ff');sendBLEData(cmd);}
 function handleBLERx(line){
   addBleLog(line,'#e4e8f0');
-  // Check WiFi provisioning responses first
   if(handleWifiResponse(line))return;
   try{
     var obj=JSON.parse(line);
@@ -766,7 +841,7 @@ function handleData(data){
   document.getElementById('msgCount').textContent=totalMsg;
   document.getElementById('lastTime').textContent=fmtTime(new Date());
   var logMsg='S1:'+dT(parseFloat(data.s1))+' S2:'+dT(parseFloat(data.s2))+' S3:'+dT(parseFloat(data.s3))+' S4:'+dT(parseFloat(data.s4))+' '+uS();
-  addLog('\u{1F4E8} #'+totalMsg+' '+logMsg,'');
+  addLog('📨 #'+totalMsg+' '+logMsg,'');
 }
 
 // ═══════════════════ WIFI PROVISIONING ═══════════════════
@@ -779,150 +854,136 @@ function updateWifiBtns(){
   document.getElementById('btnWifiStatus').disabled=!en;
   document.getElementById('btnWifiClear').disabled=!en;
 }
-
 function togglePswVis(){
   var inp=document.getElementById('wifiPSW');
   inp.type=inp.type==='password'?'text':'password';
 }
-
 function wifiConnect(){
-  if(!isBle){addLog('\u274C Conecta BLE primero','error');return;}
+  if(!isBle){addLog('❌ Conecta BLE primero','error');return;}
   var ssid=document.getElementById('wifiSSID').value.trim();
   var psw=document.getElementById('wifiPSW').value;
-  if(!ssid){addLog('\u274C Ingresa el nombre de la red (SSID)','error');return;}
+  if(!ssid){addLog('❌ Ingresa el nombre de la red (SSID)','error');return;}
   var cmd='wifi:'+ssid+','+psw;
   addBleLog('> '+cmd.replace(psw,'****'),'#ff9800');
   sendBLEData(cmd);
-  addLog('\u{1F4E1} Enviando credenciales WiFi al ESP32...','warn');
+  addLog('📡 Enviando credenciales WiFi al ESP32...','warn');
   wifiWaitingResponse=true;
   var sb=document.getElementById('wifiStatusBox');
   sb.style.display='block';
-  sb.innerHTML='\u23F3 Conectando a <strong>'+ssid+'</strong>... (puede tomar 10-15 seg)';
+  sb.innerHTML='⏳ Conectando a <strong>'+ssid+'</strong>... (puede tomar 10-15 seg)';
 }
-
 function wifiScan(){
-  if(!isBle){addLog('\u274C Conecta BLE primero','error');return;}
+  if(!isBle){addLog('❌ Conecta BLE primero','error');return;}
   addBleLog('> wifi:scan','#ff9800');
   sendBLEData('wifi:scan');
-  addLog('\u{1F50E} Escaneando redes WiFi...','warn');
+  addLog('🔎 Escaneando redes WiFi...','warn');
   wifiWaitingResponse=true;
   var sr=document.getElementById('wifiScanResults');
   sr.style.display='block';
-  sr.innerHTML='<h4>\u{1F50E} Escaneando...</h4>';
+  sr.innerHTML='<h4>🔎 Escaneando...</h4>';
 }
-
 function wifiStatus(){
-  if(!isBle){addLog('\u274C Conecta BLE primero','error');return;}
+  if(!isBle){addLog('❌ Conecta BLE primero','error');return;}
   addBleLog('> wifi:status','#ff9800');
   sendBLEData('wifi:status');
   wifiWaitingResponse=true;
   var sb=document.getElementById('wifiStatusBox');
   sb.style.display='block';
-  sb.innerHTML='\u23F3 Consultando estado WiFi...';
+  sb.innerHTML='⏳ Consultando estado WiFi...';
 }
-
 function wifiClear(){
-  if(!isBle){addLog('\u274C Conecta BLE primero','error');return;}
-  if(!confirm('\u00BFBorrar credenciales WiFi guardadas en el ESP32?'))return;
+  if(!isBle){addLog('❌ Conecta BLE primero','error');return;}
+  if(!confirm('¿Borrar credenciales WiFi guardadas en el ESP32?'))return;
   addBleLog('> wifi:clear','#ff9800');
   sendBLEData('wifi:clear');
-  addLog('\u{1F5D1} Borrando credenciales WiFi...','warn');
+  addLog('🗑 Borrando credenciales WiFi...','warn');
   document.getElementById('wifiSSID').value='';
   document.getElementById('wifiPSW').value='';
 }
-
 function handleWifiResponse(line){
-  // Parse wifi scan results
   if(line.indexOf('SCAN|')===0){
     var parts=line.split('|');
-    // Format: SCAN|count
     var count=parseInt(parts[1])||0;
     var sr=document.getElementById('wifiScanResults');
     sr.style.display='block';
-    sr.innerHTML='<h4>\u{1F4F6} Redes encontradas ('+count+')</h4>';
+    sr.innerHTML='<h4>📶 Redes encontradas ('+count+')</h4>';
     return true;
   }
   if(line.indexOf('NET|')===0){
-    // Format: NET|ssid|rssi|encrypted
     var parts=line.split('|');
     var ssid=parts[1]||'?', rssi=parts[2]||'?', enc=parts[3]==='1';
     var sr=document.getElementById('wifiScanResults');
     var div=document.createElement('div');
     div.className='wifi-net';
-    div.innerHTML='<span><span class="wifi-net-lock">'+(enc?'\u{1F512}':'\u{1F513}')+'</span> <span class="wifi-net-name">'+ssid+'</span></span><span class="wifi-net-rssi">'+rssi+' dBm '+wifiSignalBars(parseInt(rssi))+'</span>';
-    div.onclick=function(){document.getElementById('wifiSSID').value=ssid;addLog('\u2705 Red seleccionada: '+ssid,'success');};
+    div.innerHTML='<span><span class="wifi-net-lock">'+(enc?'🔒':'🔓')+'</span> <span class="wifi-net-name">'+ssid+'</span></span><span class="wifi-net-rssi">'+rssi+' dBm '+wifiSignalBars(parseInt(rssi))+'</span>';
+    div.onclick=function(){document.getElementById('wifiSSID').value=ssid;addLog('✅ Red seleccionada: '+ssid,'success');};
     sr.appendChild(div);
     return true;
   }
   if(line.indexOf('SCAN_END')===0){
     wifiWaitingResponse=false;
-    addLog('\u2705 Escaneo WiFi completado','success');
+    addLog('✅ Escaneo WiFi completado','success');
     return true;
   }
-  // Parse wifi status
   if(line.indexOf('WIFIST|')===0){
-    // Format: WIFIST|connected|ssid|ip|rssi|mqtt|saved_ssid
     var parts=line.split('|');
     var conn=parts[1]==='1', ssid=parts[2]||'--', ip=parts[3]||'--',
         rssi=parts[4]||'--', mqttOk=parts[5]==='1', saved=parts[6]||'--';
     var sb=document.getElementById('wifiStatusBox');
     sb.style.display='block';
     sb.innerHTML=
-      '<div>Estado: '+(conn?'<span class="ws-ok">\u2705 Conectado</span>':'<span class="ws-fail">\u274C Desconectado</span>')+'</div>'+
+      '<div>Estado: '+(conn?'<span class="ws-ok">✅ Conectado</span>':'<span class="ws-fail">❌ Desconectado</span>')+'</div>'+
       '<div>Red: <strong>'+ssid+'</strong></div>'+
       '<div>IP: <strong>'+ip+'</strong></div>'+
-      '<div>Se\u00F1al: <strong>'+rssi+' dBm</strong> '+wifiSignalBars(parseInt(rssi))+'</div>'+
-      '<div>MQTT: '+(mqttOk?'<span class="ws-ok">\u2705 Conectado</span>':'<span class="ws-fail">\u274C Desconectado</span>')+'</div>'+
+      '<div>Señal: <strong>'+rssi+' dBm</strong> '+wifiSignalBars(parseInt(rssi))+'</div>'+
+      '<div>MQTT: '+(mqttOk?'<span class="ws-ok">✅ Conectado</span>':'<span class="ws-fail">❌ Desconectado</span>')+'</div>'+
       '<div>Red guardada: <strong>'+saved+'</strong></div>';
-    // Update status bar
     document.getElementById('dotWifi').className='dot '+(conn?'on':'off');
     document.getElementById('wifiSt').textContent=conn?ssid:'Off';
     wifiWaitingResponse=false;
-    addLog('\u{1F4F6} WiFi: '+(conn?ssid+' ('+ip+')':'Desconectado'),'success');
+    addLog('📶 WiFi: '+(conn?ssid+' ('+ip+')':'Desconectado'),'success');
     return true;
   }
-  // Parse wifi connect result
   if(line.indexOf('WIFI_OK|')===0){
     var parts=line.split('|');
     var ssid=parts[1]||'', ip=parts[2]||'';
     var sb=document.getElementById('wifiStatusBox');
     sb.style.display='block';
-    sb.innerHTML='<span class="ws-ok">\u2705 Conectado a <strong>'+ssid+'</strong></span><br>IP: <strong>'+ip+'</strong><br>Credenciales guardadas en flash \u{1F4BE}';
+    sb.innerHTML='<span class="ws-ok">✅ Conectado a <strong>'+ssid+'</strong></span><br>IP: <strong>'+ip+'</strong><br>Credenciales guardadas en flash 💾';
     document.getElementById('dotWifi').className='dot on';
     document.getElementById('wifiSt').textContent=ssid;
     wifiWaitingResponse=false;
-    addLog('\u2705 WiFi conectado: '+ssid+' ('+ip+')','success');
+    addLog('✅ WiFi conectado: '+ssid+' ('+ip+')','success');
     return true;
   }
   if(line.indexOf('WIFI_FAIL|')===0){
     var reason=line.substring(10);
     var sb=document.getElementById('wifiStatusBox');
     sb.style.display='block';
-    sb.innerHTML='<span class="ws-fail">\u274C Fallo al conectar</span><br>'+reason;
+    sb.innerHTML='<span class="ws-fail">❌ Fallo al conectar</span><br>'+reason;
     document.getElementById('dotWifi').className='dot off';
     document.getElementById('wifiSt').textContent='Fallo';
     wifiWaitingResponse=false;
-    addLog('\u274C WiFi fallo: '+reason,'error');
+    addLog('❌ WiFi fallo: '+reason,'error');
     return true;
   }
   if(line.indexOf('WIFI_CLEARED')===0){
     var sb=document.getElementById('wifiStatusBox');
     sb.style.display='block';
-    sb.innerHTML='\u{1F5D1} Credenciales borradas. Se usar\u00E1 red default al reiniciar.';
+    sb.innerHTML='🗑 Credenciales borradas. Se usará red default al reiniciar.';
     document.getElementById('dotWifi').className='dot off';
     document.getElementById('wifiSt').textContent='--';
-    addLog('\u{1F5D1} Credenciales WiFi borradas','warn');
+    addLog('🗑 Credenciales WiFi borradas','warn');
     return true;
   }
   return false;
 }
-
 function wifiSignalBars(rssi){
   if(isNaN(rssi))return '';
-  if(rssi>-50)return '\u2588\u2588\u2588\u2588';
-  if(rssi>-60)return '\u2588\u2588\u2588\u2581';
-  if(rssi>-70)return '\u2588\u2588\u2581\u2581';
-  return '\u2588\u2581\u2581\u2581';
+  if(rssi>-50)return '████';
+  if(rssi>-60)return '███▁';
+  if(rssi>-70)return '██▁▁';
+  return '█▁▁▁';
 }
 
 // ═══════════════════ STATUS ═══════════════════
@@ -935,7 +996,7 @@ function updSt(){
   bm.textContent=isMqtt?'Desconectar MQTT':'Conectar MQTT';
   bm.className='btn '+(isMqtt?'btn-disconnect':'btn-mqtt');
   var bb=document.getElementById('btnBle');
-  bb.textContent=isBle?'\u{1F50C} Desconectar BLE':'\u{1F517} Conectar BLE';
+  bb.textContent=isBle?'🔌 Desconectar BLE':'🔗 Conectar BLE';
   bb.className='btn '+(isBle?'btn-disconnect':'btn-ble');
   updateWifiBtns();
 }
@@ -951,9 +1012,93 @@ function addLog(msg,type){
 }
 function clearLog(){document.getElementById('logList').innerHTML='';addLog('Log limpiado','');}
 
+// ═══════════════════ OVEN CHART ═══════════════════
+var ovenChart = null;
+var ovenData = [];
+
+function initOvenChart() {
+  const ctx = document.getElementById("ovenChart").getContext("2d");
+
+  ovenChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "Oven Temp",
+        data: [],
+        borderColor: "#ff9800",
+        backgroundColor: "rgba(255,152,0,0.15)",
+        borderWidth: 2,
+        tension: 0.25,
+        fill: true,
+        pointRadius: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        y: {
+          beginAtZero: false,
+          ticks: { color: "#e4e8f0" },
+          grid: { color: "rgba(255,255,255,0.1)" }
+        },
+        x: {
+          ticks: { color: "#e4e8f0" },
+          grid: { color: "rgba(255,255,255,0.1)" }
+        }
+      }
+    }
+  });
+}
+
+function updateOvenChart(temp) {
+  const t = fmtTime(new Date());
+
+  ovenChart.data.labels.push(t);
+  ovenChart.data.datasets[0].data.push(temp);
+
+  // Mantener 60 puntos
+  if (ovenChart.data.labels.length > 60) {
+    ovenChart.data.labels.shift();
+    ovenChart.data.datasets[0].data.shift();
+  }
+
+  // Auto‑ajuste dinámico
+  const min = Math.min(...ovenChart.data.datasets[0].data);
+  const max = Math.max(...ovenChart.data.datasets[0].data);
+
+  ovenChart.options.scales.y.min = Math.floor(min - 5);
+  ovenChart.options.scales.y.max = Math.ceil(max + 5);
+
+  ovenChart.update("none");
+}
+
+
 // ═══════════════════ INIT ═══════════════════
-window.addEventListener('load',function(){buildCards();buildLimits();initChart();});
+window.addEventListener('load',function(){
+  buildCards();
+  buildLimits();
+  initChart();
+  initOvenChart();
+  updSt();
+
+  // OVEN: Sliders y botones
+  document.getElementById("servoInRange").addEventListener("input", function(e){
+    if(mqttClient)mqttClient.publish("cesar/esp32/servoIn", e.target.value);
+  });
+  document.getElementById("servoOutRange").addEventListener("input", function(e){
+    if(mqttClient)mqttClient.publish("cesar/esp32/servoOut", e.target.value);
+  });
+  document.getElementById("autoModeBtn").onclick = function(){
+    if(mqttClient)mqttClient.publish("cesar/esp32/mode", "auto");
+  };
+  document.getElementById("manualModeBtn").onclick = function(){
+    if(mqttClient)mqttClient.publish("cesar/esp32/mode", "manual");
+  };
+});
 </script>
+
 </body>
 </html>
 
