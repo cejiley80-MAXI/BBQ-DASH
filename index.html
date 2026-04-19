@@ -65,7 +65,7 @@
     @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 
     /* SENSOR CARDS */
-    .sensors-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .sensors-grid{display:grid;grid-template-columns:repeat(2, 1fr);gap:10px;}
     .sensor-card{background:var(--card);border:1px solid var(--border);border-radius:15px;
       padding:14px 10px;text-align:center;position:relative;overflow:hidden;}
     .sensor-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
@@ -224,10 +224,12 @@
     .mode-buttons button:nth-child(2){background:var(--bg);color:var(--muted);border:1px solid var(--border);}
     .mode-buttons button:nth-child(2):hover{color:var(--text);border-color:var(--accent);}
 
-    @media(min-width:100px){
-      .sensors-grid{grid-template-columns:repeat(4,1fr);}
-      .s-value{font-size:2.6rem;}
-    }
+@media (min-width: 900px) {
+  .sensors-grid {
+    max-width: 600px;
+    margin: auto;
+  }
+}
   </style>
 </head>
 <body>
