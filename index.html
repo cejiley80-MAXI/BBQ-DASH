@@ -16,11 +16,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Cesar's BBQ Dashboard</title>
+  <title>Cesar's BBQ Dashboard v4.1</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <!-- Chart.js y MQTT.js (asegúrate de tenerlos incluidos) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+
   <style>
     :root{
       --bg:#050814;
@@ -632,27 +633,73 @@
       color:#0b1120;
       font-weight:600;
     }
-    
     .mode-buttons button.active {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: #0b1120;
-  border-color: transparent;
-  font-weight: 700;
-  box-shadow: 0 0 10px rgba(34,197,94,0.6);
-}
-
-
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #0b1120;
+      border-color: transparent;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(34,197,94,0.6);
+    }
+    .Auto-Adjust {
+      background: radial-gradient(circle at top left, #111827 0%, #020617 55%);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(148,163,184,0.25);
+      box-shadow: 0 10px 25px rgba(15,23,42,0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      color: #e5e7eb;
+    }
+    .setting-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .setting-block label {
+      font-size: 14px;
+      color: #9ca3af;
+    }
+    .setting-block input[type="range"] {
+      width: 100%;
+    }
+    .apply-btn {
+      margin-top: 10px;
+      padding: 10px;
+      background: #2563eb;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .apply-btn:hover {
+      background: rgb(34, 38, 148);
+      color: rgb(241, 242, 247);
+    }
+    .servo-group {
+      margin-bottom: 12px;
+    }
+    .servo-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+    #servoInPosLabel,
+    #servoOutPosLabel {
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
 
-  <!-- HERO -->
   <div class="hero">
     <h1>🔥 <span class="r">Cesar's</span> <span class="w">BBQ</span> 🔥</h1>
-    <p>Dashboard IoT Mobile</p>
+    <p>Dashboard IoT Mobile v4.1</p>
   </div>
 
-  <!-- STATUS BAR -->
   <div class="status-bar">
     <div class="status-item"><span class="dot off" id="dotMqtt"></span> MQTT: <strong id="mqttSt">Off</strong></div>
     <div class="status-item"><span class="dot off" id="dotBle"></span> BLE: <strong id="bleSt">Off</strong></div>
@@ -661,12 +708,10 @@
     <div class="status-item">🕓 <strong id="lastTime">--:--</strong></div>
   </div>
 
-  <!-- GLOBAL ALARM BAR -->
   <div id="globalAlarm" class="hidden">
     <span id="globalAlarmText"></span>
   </div>
 
-  <!-- TABS -->
   <div class="tabs">
     <button class="tab active" onclick="showTab('monitor')"><span class="tab-icon">🌡️</span>Monitor</button>
     <button class="tab" onclick="showTab('connect')"><span class="tab-icon">🔌</span>Conexion</button>
@@ -674,29 +719,28 @@
     <button class="tab" onclick="showTab('chart')"><span class="tab-icon">📈</span>Grafica</button>
     <button class="tab" onclick="showTab('log')"><span class="tab-icon">📃</span>Log</button>
     <button class="tab" onclick="showTab('oven')"><span class="tab-icon">🍽️</span>OVEN</button>
+    <button class="tab" onclick="showTab('autoSettings')"><span class="tab-icon">🤖</span>Auto Ajustes</button>
   </div>
 
   <button id="muteAlarmBtn" class="btn-small">🔇 Silenciar</button>
 
-  <!-- MONITOR TAB -->
+  <!-- MONITOR -->
   <div class="panel active" id="panelMonitor">
     <div class="sensors-grid" id="sensorsGrid"></div>
   </div>
 
-  <!-- CONNECT TAB -->
+  <!-- CONNECT -->
   <div class="panel" id="panelConnect">
 
-    <!-- BLE -->
     <div class="conn-section">
       <h3>🔹 Bluetooth Low Energy (BLE)</h3>
-      <button class="btn btn-ble" id="btnBle" onclick="toggleBLE()">🔌 Conectar BLE</button>
+      <button class="btn btn-ble" id="btnBle" onclick="toggleBLE()">🔗 Conectar BLE</button>
       <div class="ble-note">
         Conecta directamente al ESP32 sin WiFi mediante Bluetooth.<br>
-        Requiere <strong>Abrir en Chrome en Android</strong>. Nombre: <strong>CesarBBQ</strong>
+        Requiere <strong>Chrome en Android</strong>. Nombre: <strong>CesarBBQ</strong>
       </div>
     </div>
 
-    <!-- BLE Terminal -->
     <div class="ble-terminal" id="bleTerminal" style="display:none">
       <h3>🔹 Terminal BLE</h3>
       <div class="ble-output" id="bleOutput"></div>
@@ -714,7 +758,6 @@
       </div>
     </div>
 
-    <!-- WIFI PROVISIONING -->
     <div class="wifi-section" id="wifiSection">
       <h3>📶 WiFi Provisioning (via BLE)</h3>
       <div class="conn-field">
@@ -740,11 +783,10 @@
       <div class="wifi-status-box" id="wifiStatusBox"></div>
       <div class="ble-note" style="border-left-color:#ff9800;background:rgba(255,152,0,0.08);margin-top:10px">
         ⚠️ Requiere <strong>conexión BLE activa</strong>. Primero conecta Bluetooth arriba.<br>
-        Las credenciales se guardan en la <strong>memoria flash</strong> del ESP32 y sobreviven reinicios.
+        Las credenciales se guardan en la <strong>flash</strong> del ESP32.
       </div>
     </div>
 
-    <!-- MQTT -->
     <div class="conn-section">
       <h3>📡 MQTT (WiFi/Internet)</h3>
       <div class="conn-field">
@@ -759,10 +801,9 @@
     </div>
   </div>
 
-  <!-- SETTINGS TAB -->
+  <!-- SETTINGS -->
   <div class="panel" id="panelSettings">
 
-    <!-- Unit Toggle -->
     <div class="setting-group">
       <h3>🌡️ Unidad de Temperatura</h3>
       <div class="unit-toggle">
@@ -771,7 +812,6 @@
       </div>
     </div>
 
-    <!-- Protein -->
     <div class="setting-group">
       <h3>🥩 Perfil de Proteina</h3>
       <select class="protein-select" id="proteinSel" onchange="onProteinChange()">
@@ -790,14 +830,12 @@
       <div class="protein-info" id="proteinInfo">Selecciona un perfil y aplica a cada zona.</div>
     </div>
 
-    <!-- Limits -->
     <div class="setting-group">
       <h3>🌡️ Limites por Zona</h3>
       <div id="limitsContainer"></div>
       <button class="btn btn-mqtt" style="margin-top:10px" onclick="applyManualLimits()">✔ Aplicar Limites Manuales</button>
     </div>
 
-    <!-- Actions -->
     <div class="setting-group">
       <h3>💾 Acciones</h3>
       <button class="btn btn-mqtt" onclick="downloadCSV()">💾 Descargar CSV</button>
@@ -805,7 +843,7 @@
     </div>
   </div>
 
-  <!-- CHART TAB -->
+  <!-- CHART -->
   <div class="panel" id="panelChart">
     <div class="chart-container">
       <div class="chart-header">
@@ -816,7 +854,7 @@
     </div>
   </div>
 
-  <!-- LOG TAB -->
+  <!-- LOG -->
   <div class="panel" id="panelLog">
     <div class="log-container">
       <div class="log-header">
@@ -829,25 +867,24 @@
     </div>
   </div>
 
-  <!-- OVEN TAB -->
+  <!-- OVEN -->
   <div class="panel" id="panelOven">
     <div class="oven-container">
 
       <div class="oven-header">
         <h2>Oven Control</h2>
       </div>
+      <button id="clearOvenChart" class="btn-small">Limpiar gráfica</button>
 
-      <!-- Monitor de temperatura -->
       <div class="sensor-box">
         <h3>Oven Temperature</h3>
         <div id="oven-temp-display" class="temp-value">---</div>
         <canvas id="ovenChart" width="300" height="150"></canvas>
       </div>
 
-      <!-- Controles de motores -->
       <div class="motor-controls">
         <div class="oven-limits">
-          <h3>Oven Limits</h3>
+          <h3>Oven Limits & Setpoint</h3>
 
           <label>Preset:</label>
           <select id="ovenPreset">
@@ -866,1027 +903,1254 @@
           <input type="number" id="ovenMax" value="260">
 
           <button id="applyOvenLimits">Apply Limits</button>
+
+          <label>Setpoint:</label>
+          <input type="number" id="ovenSetpoint" value="180">
+          <button id="applyOvenSetpoint">Apply Setpoint</button>
         </div>
 
-        <h3>Airflow Motors</h3>
+        <div class="servo-group">
+          <div class="servo-header">
+            <span>Entrada de aire</span>
+            <span id="servoInPosLabel">90°</span>
+          </div>
+          <input type="range" id="servoInRange" min="0" max="180" value="90">
+        </div>
 
-        <label for="servoInRange">Servo In (Air Intake):</label>
-        <label for="servoInRange">Left - CLOSED   Right - OPEN</label>
-        <input type="range" min="0" max="180" id="servoInRange">
-
-        <label for="servoOutRange">Servo Out (Exhaust):</label>
-        <label for="servoInRange">Left - CLOSED   Right - OPEN</label>
-        <input type="range" min="0" max="180" id="servoOutRange">
+        <div class="servo-group">
+          <div class="servo-header">
+            <span>Salida de aire</span>
+            <span id="servoOutPosLabel">90°</span>
+          </div>
+          <input type="range" id="servoOutRange" min="0" max="180" value="90">
+        </div>
 
         <div class="mode-buttons">
           <button id="autoModeBtn">Auto Mode</button>
           <button id="manualModeBtn">Manual Mode</button>
         </div>
       </div>
-
     </div>
   </div>
 
-  <div class="footer">Cesar's BBQ — ESP32 + BLE — 2026</div>
-
-  <script>
-  document.getElementById("muteAlarmBtn").onclick = () => {
-    stopAlarmSound();
-  };
-
-  // ═══════════════════ VARIABLES GLOBALES ═══════════════════
-
-  // Última temperatura del horno (siempre en °C internamente)
-  let lastOvenTemp = null;
-
-  // Límites del horno (siempre en °C internamente)
-  window.ovenLimits = {
-    min: 150,
-    max: 260
-  };
-
-  // Presets del horno
-  const ovenPresets = {
-    smoke: { min: 90, max: 120 },
-    grill: { min: 180, max: 250 },
-    roast: { min: 160, max: 200 },
-    sear:  { min: 250, max: 300 },
-    pizza: { min: 300, max: 450 }
-  };
-
-  // Convierte presets según unidad actual
-  function getPresetValue(v) {
-    return unit === 'F' ? cToF(v) : v;
-  }
-
-  // Control de actualización del gráfico del horno
-  let lastOvenUpdate = 0;
-
-  // Flags para evitar loops en sliders
-  let updatingServoIn = false;
-  let updatingServoOut = false;
-
-  // ═══════════════════ STATE ═══════════════════
-  var MAX_PTS=60, SC=['#00d4ff','#00e676','#ffab40','#ff5252'],
-      SBG=['rgba(0,212,255,0.08)','rgba(0,230,118,0.08)','rgba(255,171,64,0.08)','rgba(255,82,82,0.08)'];
-  var ZONES=['Zona A','Zona B','Zona C','Zona D'];
-  var mqttClient=null,isMqtt=false,chart=null,totalMsg=0,unit='C';
-  var sMin=[Infinity,Infinity,Infinity,Infinity], sMax=[-Infinity,-Infinity,-Infinity,-Infinity];
-  var limits=[{min:10,max:60},{min:10,max:60},{min:10,max:60},{min:10,max:60}];
-  var sensorProtein=[null,null,null,null], csvData=[];
-  // Últimos valores crudos de cada sonda (en °C)
-  var lastValues = [null, null, null, null];
-
-  // BLE state
-  var bleDevice=null, bleTx=null, bleRx=null, isBle=false, bleBuffer='';
-  var NUS_SVC='6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-  var NUS_RX='6e400002-b5a3-f393-e0a9-e50e24dcca9e';
-  var NUS_TX='6e400003-b5a3-f393-e0a9-e50e24dcca9e';
-
-  var profiles={
-    custom:null,
-    res_mr:{min:57,max:63,info:'Res Medio Rojo: 57-63 C. Centro rosado, jugosa.'},
-    res_mp:{min:63,max:68,info:'Res Medio: 63-68 C. Centro rosa palido.'},
-    res_mw:{min:66,max:71,info:'Res Medium-Well: 66-71 C. Ligeramente rosado, firme.'},
-    res_bc:{min:71,max:77,info:'Res Bien Cocida: 71-77 C. Sin rosado, firme.'},
-    pollo:{min:74,max:85,info:'Pollo: Min segura 74 C (USDA). Jugos claros.'},
-    cerdo:{min:63,max:74,info:'Cerdo: Min segura 63 C con reposo 3 min.'},
-    pescado:{min:63,max:68,info:'Pescado: 63 C. Carne opaca, se separa en hojuelas.'},
-    marisco:{min:63,max:74,info:'Mariscos: 63-74 C. Opacos y firmes.'},
-    pan:{min:88,max:96,info:'Pan/Reposteria: 88-96 C interna.'},
-    oven:{min:150,max:260,info:'OVEN: Temperatura ambiente del horno 150-260 C.'}
-  };
-
-  // ═══════════════════ UTILS ═══════════════════
-  function cToF(c){return(c*9/5)+32;} 
-  function fToC(f){return(f-32)*5/9;}
-  function dT(c){return unit==='F'?cToF(c).toFixed(1):c.toFixed(1);}
-  function uS(){return unit==='F'?'°F':'°C';}
-  function fmtTime(d){return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')+':'+d.getSeconds().toString().padStart(2,'0');}
-
-  // ═══════════════════ TABS ═══════════════════
-  function showTab(name){
-    var tabs=document.querySelectorAll('.tab'), panels=document.querySelectorAll('.panel');
-    var map={monitor:'panelMonitor',connect:'panelConnect',settings:'panelSettings',chart:'panelChart',log:'panelLog',oven:'panelOven'};
-    tabs.forEach(function(t){t.classList.remove('active');});
-    panels.forEach(function(p){p.classList.remove('active');});
-    var names=['monitor','connect','settings','chart','log','oven'];
-    var idx=names.indexOf(name);
-    if(idx>=0)tabs[idx].classList.add('active');
-    document.getElementById(map[name]).classList.add('active');
-    if(name==='chart'&&chart)chart.resize();
-  }
-
-  // ═══════════════════ BUILD SENSOR CARDS ═══════════════════
-  function buildCards(){
-    var g=document.getElementById('sensorsGrid');
-    g.innerHTML='';
-    for(var i=0;i<4;i++){
-      g.innerHTML+=
-        '<div class="sensor-card">'+
-          '<div class="s-label">◆ '+ZONES[i]+'</div>'+
-          '<div class="s-value" id="v'+(i+1)+'">--.-</div>'+
-          '<div class="s-unit" id="u'+(i+1)+'">'+uS()+'</div>'+
-          '<div class="s-alarm a-ok" id="a'+(i+1)+'">--</div><br>'+
-          '<div class="s-protein hidden" id="sp'+(i+1)+'"></div>'+
-          '<div class="s-limits" id="sl'+(i+1)+'">Lim: <strong>'+dT(limits[i].min)+' — '+dT(limits[i].max)+'</strong> '+uS()+'</div>'+
-          '<div class="s-bar"><div class="s-bar-fill" id="b'+(i+1)+'"></div></div>'+
-          '<div class="s-minmax"><span>Min:<span class="mn" id="mn'+(i+1)+'">--</span></span><span>Max:<span class="mx" id="mx'+(i+1)+'">--</span></span></div>'+
-        '</div>';
-    }
-  }
-
-  // ═══════════════════ BUILD LIMITS UI ═══════════════════
-  function buildLimits(){
-    var c=document.getElementById('limitsContainer');
-    c.innerHTML='';
-    for(var i=0;i<4;i++){
-      var mn=unit==='F'?cToF(limits[i].min):limits[i].min;
-      var mx=unit==='F'?cToF(limits[i].max):limits[i].max;
-      c.innerHTML+=
-        '<div class="limit-row">'+
-          '<label>'+ZONES[i]+':</label>'+
-          '<span style="color:var(--muted);font-size:0.65rem">Min</span>'+
-          '<input type="number" class="limit-input" id="lm'+(i+1)+'" value="'+(Math.round(mn*10)/10)+'" step="0.5">'+
-          '<span style="color:var(--muted);font-size:0.65rem">Max</span>'+
-          '<input type="number" class="limit-input" id="lx'+(i+1)+'" value="'+(Math.round(mx*10)/10)+'" step="0.5">'+
-          '<span style="font-size:0.65rem;color:var(--muted)">'+uS()+'</span>'+
-          '<button class="btn-apply-sensor" onclick="applyProteinToSensor('+i+')">🥩</button>'+
-          '<span class="protein-tag" id="pt'+(i+1)+'" style="display:'+(sensorProtein[i]?'inline':'none')+'">'+
-            (sensorProtein[i]||'')+
-          '</span>'+
-        '</div>';
-    }
-  }
-
-  // ═══════════════════ UNIT ═══════════════════
-  function setUnit(u){
-    unit=u;
-    document.getElementById('btnC').className='unit-btn'+(u==='C'?' active':'');
-    document.getElementById('btnF').className='unit-btn'+(u==='F'?' active':'');
-    buildLimits();
-    refreshCards();
-    updateChartUnit();
-    refreshOvenUI();
-    refreshPresetList();
-    addLog('🌡 Unidad: '+uS(),'warn');
-  }
-
-  // ═══════════════════ PROTEIN ═══════════════════
-  function onProteinChange(){
-    var sel=document.getElementById('proteinSel').value;
-    var p=profiles[sel], info=document.getElementById('proteinInfo');
-    if(!p){info.textContent='Modo personalizado.';return;}
-    info.innerHTML=p.info+'<br><strong style="color:var(--accent)">↑ Pulsa 🥩 en cada zona para aplicar.</strong>';
-  }
-  function applyProteinToSensor(idx){
-    var sel=document.getElementById('proteinSel').value;
-    var p=profiles[sel];
-    if(!p){addLog('⚠ Selecciona una proteina','warn');return;}
-    limits[idx].min=p.min; limits[idx].max=p.max;
-    var selectEl=document.getElementById('proteinSel');
-    sensorProtein[idx]=selectEl.options[selectEl.selectedIndex].text;
-    buildLimits(); refreshLimDisp(); refreshAlarms();
-    var cp=document.getElementById('sp'+(idx+1));
-    cp.textContent='🥩 '+sensorProtein[idx]; cp.className='s-protein';
-    addLog('🥩 '+ZONES[idx]+' → '+sensorProtein[idx],'success');
-  }
-  function applyManualLimits(){
-    for(var i=0;i<4;i++){
-      var mn=parseFloat(document.getElementById('lm'+(i+1)).value)||0;
-      var mx=parseFloat(document.getElementById('lx'+(i+1)).value)||100;
-      limits[i].min=unit==='F'?fToC(mn):mn;
-      limits[i].max=unit==='F'?fToC(mx):mx;
-    }
-    refreshLimDisp(); refreshAlarms();
-    addLog('✅ Limites actualizados','success');
-  }
-
-  // ═══════════════════ REFRESH ═══════════════════
-  function refreshCards(){
-    for(var i=0;i<4;i++){
-      var ve=document.getElementById('v'+(i+1));
-      document.getElementById('u'+(i+1)).textContent=uS();
-      if(ve.dataset.c!==undefined&&ve.dataset.c!==''){
-        ve.textContent=dT(parseFloat(ve.dataset.c));
-      }
-      if(sMin[i]!==Infinity)document.getElementById('mn'+(i+1)).textContent=dT(sMin[i])+uS();
-      if(sMax[i]!==-Infinity)document.getElementById('mx'+(i+1)).textContent=dT(sMax[i])+uS();
-    }
-    refreshLimDisp(); refreshAlarms();
-  }
-  function refreshLimDisp(){
-    for(var i=0;i<4;i++){
-      var el=document.getElementById('sl'+(i+1));
-      if(el)el.innerHTML='Lim: <strong>'+dT(limits[i].min)+' — '+dT(limits[i].max)+'</strong> '+uS();
-    }
-  }
-  function refreshAlarms(){
-    for(var i=0;i<4;i++){
-      var ve=document.getElementById('v'+(i+1));
-      if(!ve||ve.dataset.c===undefined||ve.dataset.c==='')continue;
-      updateAlarm(i+1,parseFloat(ve.dataset.c));
-    }
-  }
-  function updateAlarm(idx,c){
-    var el=document.getElementById('a'+idx), lim=limits[idx-1];
-    var dmn=dT(lim.min), dmx=dT(lim.max);
-    if(c<lim.min){el.className='s-alarm a-warn';el.textContent='COCINANDO A ('+dmn+'-'+dmx+uS()+')';}
-    else if(c>lim.max){el.className='s-alarm a-danger';el.textContent='🚨PASO PUNTO DE ('+dmx+uS()+')';}
-    else{el.className='s-alarm a-ok';el.textContent='TERMINADO 🥩';}
-  }
-
-  // ═══════════════════ UPDATE SENSORS ═══════════════════
-  function updateSensors(data){
-    var keys=['s1','s2','s3','s4'];
-    for(var i=0;i<4;i++){
-      var val=parseFloat(data[keys[i]]);
-      if(isNaN(val))continue;
-
-      // guardar última lectura cruda
-      lastValues[i] = val;
-
-      var ve=document.getElementById('v'+(i+1));
-      ve.dataset.c=val; ve.textContent=dT(val);
-      var pct=Math.min(Math.max((val/100)*100,0),100);
-      document.getElementById('b'+(i+1)).style.width=pct+'%';
-      if(val<sMin[i])sMin[i]=val;
-      if(val>sMax[i])sMax[i]=val;
-      document.getElementById('mn'+(i+1)).textContent=dT(sMin[i])+uS();
-      document.getElementById('mx'+(i+1)).textContent=dT(sMax[i])+uS();
-      updateAlarm(i+1,val);
-    }
-  }
-
-  // ═══════════════════ CHART ═══════════════════
-  function initChart(){
-    var ctx=document.getElementById('tempChart').getContext('2d');
-    chart=new Chart(ctx,{
-      type:'line',
-      data:{labels:[],datasets:[
-        {label:'A',data:[],borderColor:SC[0],backgroundColor:SBG[0],borderWidth:1.5,tension:0.3,fill:true,pointRadius:1},
-        {label:'B',data:[],borderColor:SC[1],backgroundColor:SBG[1],borderWidth:1.5,tension:0.3,fill:true,pointRadius:1},
-        {label:'C',data:[],borderColor:SC[2],backgroundColor:SBG[2],borderWidth:1.5,tension:0.3,fill:true,pointRadius:1},
-        {label:'D',data:[],borderColor:SC[3],backgroundColor:SBG[3],borderWidth:1.5,tension:0.3,fill:true,pointRadius:1}
-      ]},
-      options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},
-        interaction:{mode:'index',intersect:false},
-        scales:{
-          x:{ticks:{color:'#7c8594',maxTicksLimit:8,font:{size:9}},grid:{color:'rgba(30,42,58,0.4)'}},
-          y:{ticks:{color:'#7c8594',font:{size:9},callback:function(v){return v+(unit==='F'?' F':' C');}},
-            grid:{color:'rgba(30,42,58,0.4)'},suggestedMin:0,suggestedMax:60}
-        },
-        plugins:{legend:{labels:{color:'#e4e8f0',usePointStyle:true,pointStyle:'circle',padding:10,font:{size:10}}},
-          tooltip:{backgroundColor:'#1a2736',titleColor:'#e4e8f0',bodyColor:'#e4e8f0',borderColor:'#2a3a4a',borderWidth:1,cornerRadius:6,padding:8}}
-      }
-    });
-  }
-  function addChartPoint(data){
-    var t=fmtTime(new Date());
-    var s1=parseFloat(data.s1)||0,s2=parseFloat(data.s2)||0,s3=parseFloat(data.s3)||0,s4=parseFloat(data.s4)||0;
-    var now=new Date();
-    csvData.push({date:now.toISOString().slice(0,10),time:t,s1:s1,s2:s2,s3:s3,s4:s4,oven: lastOvenTemp});
-    chart.data.labels.push(t);
-    chart.data.datasets[0].data.push(unit==='F'?cToF(s1):s1);
-    chart.data.datasets[1].data.push(unit==='F'?cToF(s2):s2);
-    chart.data.datasets[2].data.push(unit==='F'?cToF(s3):s3);
-    chart.data.datasets[3].data.push(unit==='F'?cToF(s4):s4);
-    if(chart.data.labels.length>MAX_PTS){chart.data.labels.shift();chart.data.datasets.forEach(function(ds){ds.data.shift();});}
-    chart.update('none');
-  }
-  function updateChartUnit(){
-    if(!chart)return;
-    chart.options.scales.y.ticks.callback=function(v){return v+(unit==='F'?' F':' C');};
-    chart.data.labels=[];
-    for(var d=0;d<4;d++)chart.data.datasets[d].data=[];
-    var st=Math.max(0,csvData.length-MAX_PTS);
-    for(var j=st;j<csvData.length;j++){
-      var r=csvData[j];
-      chart.data.labels.push(r.time);
-      for(var d=0;d<4;d++){var v=r['s'+(d+1)];chart.data.datasets[d].data.push(unit==='F'?cToF(v):v);}
-    }
-    chart.update();
-  }
-
-  function resetAll(){
-    chart.data.labels=[];chart.data.datasets.forEach(function(ds){ds.data=[];});chart.update();
-    sMin=[Infinity,Infinity,Infinity,Infinity];sMax=[-Infinity,-Infinity,-Infinity,-Infinity];csvData=[];
-    for(var i=1;i<=4;i++){
-      document.getElementById('mn'+i).textContent='--';
-      document.getElementById('mx'+i).textContent='--';
-      document.getElementById('a'+i).className='s-alarm a-ok';
-      document.getElementById('a'+i).textContent='--';
-    }
-    addLog('🔄 Reset completo','warn');
-  }
-
-  // ═══════════════════ CSV ═══════════════════
-  function downloadCSV(){
-    if(!csvData.length){addLog('⚠ Sin datos','warn');return;}
-    var ul=unit==='F'?'F':'C';
-    var h='Fecha,Hora,ZonaA('+ul+'),ZonaB('+ul+'),ZonaC('+ul+'),ZonaD('+ul+'),Alarm_A,Alarm_B,Alarm_C,Alarm_D,Oven_Temp';
-    var lines=[h];
-    for(var i=0;i<csvData.length;i++){
-      var r=csvData[i],vs=[],al=[];
-      for(var s=1;s<=4;s++){
-        var c=r['s'+s];
-        vs.push(unit==='F'?cToF(c).toFixed(1):c.toFixed(1));
-        var lm=limits[s-1];
-        al.push(c<lm.min?'BAJA':c>lm.max?'ALTA':'OK');
-      }
-      lines.push(
-        r.date + ',' +
-        r.time + ',' +
-        vs.join(',') + ',' +
-        al.join(',') + ',' +
-        (r.oven !== null ? (unit === 'F' ? cToF(r.oven).toFixed(1) : r.oven.toFixed(1))
-          : '')
-      );
-    }
-    var blob=new Blob([lines.join('\n')],{type:'text/csv'}),a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);a.download='cesars_bbq_'+new Date().toISOString().slice(0,10)+'.csv';
-    a.click();URL.revokeObjectURL(a.href);
-    addLog('💾 CSV: '+csvData.length+' registros','success');
-  }
-
-  // ═══════════════════ DATA HANDLER ═══════════════════
-  function handleData(data){
-    updateSensors(data);
-    addChartPoint(data);
-    totalMsg++;
-
-    document.getElementById('msgCount').textContent = totalMsg;
-    document.getElementById('lastTime').textContent = fmtTime(new Date());
-
-    var logMsg =
-      'S1:' + dT(parseFloat(data.s1)) +
-      ' S2:' + dT(parseFloat(data.s2)) +
-      ' S3:' + dT(parseFloat(data.s3)) +
-      ' S4:' + dT(parseFloat(data.s4)) +
-      ' OVEN:' + (lastOvenTemp !== null ? (unit === 'F' ? cToF(lastOvenTemp).toFixed(1) : lastOvenTemp.toFixed(1))
-      : '--'
-    )
-    +
-      ' ' + uS();
-
-    addLog('📨 #' + totalMsg + ' ' + logMsg, '');
-  }
-
-  // ═══════════════════ GLOBAL ALARM ═══════════════════
-  function checkGlobalAlarm() {
-    let alarm = false;
-    let msg = "";
-
-    // sondas
-    for (let i = 0; i < 4; i++) {
-      const v = lastValues[i];
-      if (v == null) continue;
-
-      const min = limits[i].min;
-      const max = limits[i].max;
-
-      //if (v < min) {
-      //  alarm = true;
-      //  msg = `Zona ${ZONES[i]} BAJA (${dT(v)} < ${dT(min)})`;
-      //  break;
-      //}
-      if (v > max) {
-        alarm = true;
-        msg = `${ZONES[i]} ALTA (${dT(v)} > ${dT(max)})`;
-        break;
-      }
-    }
-
-    // horno
-    if (!alarm && lastOvenTemp != null) {
-      if (lastOvenTemp < window.ovenLimits.min) {
-        alarm = true;
-        msg = `HORNO BAJO (${dT(lastOvenTemp)} < ${dT(window.ovenLimits.min)})`;
-      }
-      if (lastOvenTemp > window.ovenLimits.max) {
-        alarm = true;
-        msg = `HORNO ALTO (${dT(lastOvenTemp)} > ${dT(window.ovenLimits.max)})`;
-      }
-    }
-
-    const box = document.getElementById("globalAlarm");
-    const txt = document.getElementById("globalAlarmText");
-
-    if (alarm) {
-      txt.textContent = msg;
-      box.classList.remove("hidden");
-      playAlarmSound();
-    } else {
-      box.classList.add("hidden");
-      stopAlarmSound();
-    }
-  }
-
-  // ═══════════════════ MQTT ═══════════════════
-  function toggleMQTT(){if(isMqtt)disconnectMQTT();else connectMQTT();}
-  function connectMQTT(){
-    var url=document.getElementById('brokerUrl').value.trim(), topic=document.getElementById('topic').value.trim();
-    if(!url||!topic){addLog('❌ Ingresa Broker y Topico','error');return;}
-    addLog('Conectando MQTT...','');
-
-    try{
-      mqttClient = mqtt.connect(url, {
-        clientId: 'bbq_' + Math.random().toString(16).substr(2,8),
-        clean: true,
-        connectTimeout: 10000,
-        reconnectPeriod: 5000
-      });
-
-      mqttClient.on('connect', function(){
-        isMqtt = true;
-        updSt();
-        addLog('✅ MQTT conectado','success');
-
-        mqttClient.subscribe(topic);
-        mqttClient.subscribe("cesar/esp32/oven");
-        mqttClient.subscribe("cesar/esp32/servoIn/state");
-        mqttClient.subscribe("cesar/esp32/servoOut/state");
-      });
-
-      // MQTT OVEN + SENSORES
-      mqttClient.on('message', function (t, m) {
-// Botones
-        if (t === "cesar/esp32/mode/state") {
-        const mode = m.toString().trim();
-        setOvenModeUI(mode);
-        return;
-        }
-        // SENSOR DEL HORNO
-        if (t === "cesar/esp32/oven") {
-          var tempC = parseFloat(m.toString());
-          if (!isNaN(tempC)) {
-
-            // Guardar valor REAL en °C
-            lastOvenTemp = tempC;
-
-            // Mostrar en pantalla según unidad
-            const shown = (unit === 'F')
-              ? cToF(tempC).toFixed(1) + "°F"
-              : tempC.toFixed(1) + "°C";
-
-            document.getElementById("oven-temp-display").innerText = shown;
-
-            // Graficar en la unidad seleccionada
-            const graphValue = (unit === 'F') ? cToF(tempC) : tempC;
-            updateOvenChart(graphValue);
-
-            checkGlobalAlarm();
-          }
-          return;
-        }
-
-        // ESTADO REAL DEL SERVO IN
-        if (t === "cesar/esp32/servoIn/state") {
-          updatingServoIn = true;
-          document.getElementById("servoInRange").value = parseInt(m.toString());
-          setTimeout(() => updatingServoIn = false, 50);
-          return;
-        }
-
-        // ESTADO REAL DEL SERVO OUT
-        if (t === "cesar/esp32/servoOut/state") {
-          updatingServoOut = true;
-          document.getElementById("servoOutRange").value = parseInt(m.toString());
-          setTimeout(() => updatingServoOut = false, 50);
-          return;
-        }
-
-        // JSON NORMAL (4 sondas)
-        try {
-          var d = JSON.parse(m.toString());
-          handleData(d);
-          checkGlobalAlarm();
-        } catch (e) {
-          addLog('⚠ Mensaje invalido','warn');
-        }
-
-
-      });
-
-      mqttClient.on('error', function(e){
-        addLog('❌ Error: ' + e.message, 'error');
-      });
-
-      mqttClient.on('close', function(){
-        if(isMqtt){
-          isMqtt = false;
-          updSt();
-          addLog('🔌 MQTT cerrado','warn');
-        }
-      });
-
-    } catch(e){
-      addLog('❌ ' + e.message, 'error');
-    }
-  }
-
-  function disconnectMQTT(){
-    if(mqttClient){mqttClient.end(true); mqttClient=null;}
-    isMqtt=false;
-    updSt();
-    addLog('🔌 MQTT desconectado','');
-  }
-
-  // ═══════════════════ BLE ═══════════════════
-  async function toggleBLE(){if(isBle)disconnectBLE();else await connectBLE();}
-  async function connectBLE(){
-    if(!navigator.bluetooth){addLog('❌ Tu navegador no soporta Web Bluetooth. Usa Chrome en Android.','error');return;}
-    try{
-      addLog('🔎 Buscando CesarBBQ...','');
-      bleDevice=await navigator.bluetooth.requestDevice({filters:[{services:[NUS_SVC]}],optionalServices:[NUS_SVC]});
-      bleDevice.addEventListener('gattserverdisconnected',function(){
-        isBle=false;updSt();addLog('🔌 BLE desconectado','warn');
-        document.getElementById('bleTerminal').style.display='none';
-      });
-      addLog('Conectando GATT...','');
-      var server=await bleDevice.gatt.connect();
-      var svc=await server.getPrimaryService(NUS_SVC);
-      bleTx=await svc.getCharacteristic(NUS_TX);
-      bleRx=await svc.getCharacteristic(NUS_RX);
-      await bleTx.startNotifications();
-      bleTx.addEventListener('characteristicvaluechanged',function(e){
-        var val=new TextDecoder().decode(e.target.value);
-        bleBuffer+=val;
-        var nlIdx=bleBuffer.indexOf('\n');
-        while(nlIdx>=0){
-          var line=bleBuffer.substring(0,nlIdx).trim();
-          bleBuffer=bleBuffer.substring(nlIdx+1);
-          if(line.length>0)handleBLERx(line);
-          nlIdx=bleBuffer.indexOf('\n');
-        }
-      });
-      isBle=true;updSt();
-      document.getElementById('bleTerminal').style.display='block';
-      addLog('✅ BLE conectado a CesarBBQ','success');
-      addBleLog('Conectado. Escribe un comando o usa los botones rapidos.','#00e676');
-    }catch(e){
-      if(e.name!=='NotFoundError')addLog('❌ BLE: '+e.message,'error');
-      else addLog('⚠ Busqueda cancelada','warn');
-    }
-  }
-  function disconnectBLE(){
-    if(bleDevice&&bleDevice.gatt.connected)bleDevice.gatt.disconnect();
-    isBle=false;updSt();document.getElementById('bleTerminal').style.display='none';
-  }
-  async function sendBLEData(str){
-    if(!isBle||!bleRx)return;
-    var enc=new TextEncoder();
-    var data=enc.encode(str+'\n');
-    var chunk=200;
-    for(var i=0;i<data.length;i+=chunk){
-      var end=Math.min(i+chunk,data.length);
-      await bleRx.writeValueWithoutResponse(data.slice(i,end));
-      if(end<data.length)await new Promise(function(r){setTimeout(r,20);});
-    }
-  }
-  function sendBLECmd(){
-    var inp=document.getElementById('bleInput'),cmd=inp.value.trim();
-    if(!cmd)return;
-    addBleLog('> '+cmd,'#00d4ff');
-    sendBLEData(cmd);
-    inp.value='';
-  }
-  function sendBLEQuick(cmd){addBleLog('> '+cmd,'#00d4ff');sendBLEData(cmd);}
-  function handleBLERx(line){
-    addBleLog(line,'#e4e8f0');
-    if(handleWifiResponse(line))return;
-    try{
-      var obj=JSON.parse(line);
-      if(obj.s1!==undefined){handleData(obj);checkGlobalAlarm();}
-    }catch(e){}
-  }
-  function addBleLog(msg,color){
-    var el=document.getElementById('bleOutput');
-    var d=document.createElement('div');
-    d.style.color=color||'#7c8594';
-    d.textContent=msg;
-    el.appendChild(d);
-    el.scrollTop=el.scrollHeight;
-    while(el.children.length>100)el.removeChild(el.firstChild);
-  }
-
-  // ═══════════════════ WIFI PROVISIONING ═══════════════════
-  var wifiWaitingResponse=false;
-
-  function updateWifiBtns(){
-    var en=isBle;
-    document.getElementById('btnWifiConnect').disabled=!en;
-    document.getElementById('btnWifiScan').disabled=!en;
-    document.getElementById('btnWifiStatus').disabled=!en;
-    document.getElementById('btnWifiClear').disabled=!en;
-  }
-  function togglePswVis(){
-    var inp=document.getElementById('wifiPSW');
-    inp.type=inp.type==='password'?'text':'password';
-  }
-  function wifiConnect(){
-    if(!isBle){addLog('❌ Conecta BLE primero','error');return;}
-    var ssid=document.getElementById('wifiSSID').value.trim();
-    var psw=document.getElementById('wifiPSW').value;
-    if(!ssid){addLog('❌ Ingresa el nombre de la red (SSID)','error');return;}
-    var cmd='wifi:'+ssid+','+psw;
-    addBleLog('> '+cmd.replace(psw,'****'),'#ff9800');
-    sendBLEData(cmd);
-    addLog('📡 Enviando credenciales WiFi al ESP32...','warn');
-    wifiWaitingResponse=true;
-    var sb=document.getElementById('wifiStatusBox');
-    sb.style.display='block';
-    sb.innerHTML='⏳ Conectando a <strong>'+ssid+'</strong>... (puede tomar 10-15 seg)';
-  }
-  function wifiScan(){
-    if(!isBle){addLog('❌ Conecta BLE primero','error');return;}
-    addBleLog('> wifi:scan','#ff9800');
-    sendBLEData('wifi:scan');
-    addLog('🔎 Escaneando redes WiFi...','warn');
-    wifiWaitingResponse=true;
-    var sr=document.getElementById('wifiScanResults');
-    sr.style.display='block';
-    sr.innerHTML='<h4>🔎 Escaneando...</h4>';
-  }
-  function wifiStatus(){
-    if(!isBle){addLog('❌ Conecta BLE primero','error');return;}
-    addBleLog('> wifi:status','#ff9800');
-    sendBLEData('wifi:status');
-    wifiWaitingResponse=true;
-    var sb=document.getElementById('wifiStatusBox');
-    sb.style.display='block';
-    sb.innerHTML='⏳ Consultando estado WiFi...';
-  }
-  function wifiClear(){
-    if(!isBle){addLog('❌ Conecta BLE primero','error');return;}
-    if(!confirm('¿Borrar credenciales WiFi guardadas en el ESP32?'))return;
-    addBleLog('> wifi:clear','#ff9800');
-    sendBLEData('wifi:clear');
-    addLog('🗑 Borrando credenciales WiFi...','warn');
-    document.getElementById('wifiSSID').value='';
-    document.getElementById('wifiPSW').value='';
-  }
-  function handleWifiResponse(line){
-    if(line.indexOf('SCAN|')===0){
-      var parts=line.split('|');
-      var count=parseInt(parts[1])||0;
-      var sr=document.getElementById('wifiScanResults');
-      sr.style.display='block';
-      sr.innerHTML='<h4>📶 Redes encontradas ('+count+')</h4>';
-      return true;
-    }
-    if(line.indexOf('NET|')===0){
-      var parts=line.split('|');
-      var ssid=parts[1]||'?', rssi=parts[2]||'?', enc=parts[3]==='1';
-      var sr=document.getElementById('wifiScanResults');
-      var div=document.createElement('div');
-      div.className='wifi-net';
-      div.innerHTML='<span><span class="wifi-net-lock">'+(enc?'🔒':'🔓')+'</span> <span class="wifi-net-name">'+ssid+'</span></span><span class="wifi-net-rssi">'+rssi+' dBm '+wifiSignalBars(parseInt(rssi))+'</span>';
-      div.onclick=function(){document.getElementById('wifiSSID').value=ssid;addLog('✅ Red seleccionada: '+ssid,'success');};
-      sr.appendChild(div);
-      return true;
-    }
-    if(line.indexOf('SCAN_END')===0){
-      wifiWaitingResponse=false;
-      addLog('✅ Escaneo WiFi completado','success');
-      return true;
-    }
-    if(line.indexOf('WIFIST|')===0){
-      var parts=line.split('|');
-      var conn=parts[1]==='1', ssid=parts[2]||'--', ip=parts[3]||'--',
-          rssi=parts[4]||'--', mqttOk=parts[5]==='1', saved=parts[6]||'--';
-      var sb=document.getElementById('wifiStatusBox');
-      sb.style.display='block';
-      sb.innerHTML=
-        '<div>Estado: '+(conn?'<span class="ws-ok">✅ Conectado</span>':'<span class="ws-fail">❌ Desconectado</span>')+'</div>'+
-        '<div>Red: <strong>'+ssid+'</strong></div>'+
-        '<div>IP: <strong>'+ip+'</strong></div>'+
-        '<div>Señal: <strong>'+rssi+' dBm</strong> '+wifiSignalBars(parseInt(rssi))+'</div>'+
-        '<div>MQTT: '+(mqttOk?'<span class="ws-ok">✅ Conectado</span>':'<span class="ws-fail">❌ Desconectado</span>')+'</div>'+
-        '<div>Red guardada: <strong>'+saved+'</strong></div>';
-      document.getElementById('dotWifi').className='dot '+(conn?'on':'off');
-      document.getElementById('wifiSt').textContent=conn?ssid:'Off';
-      wifiWaitingResponse=false;
-      addLog('📶 WiFi: '+(conn?ssid+' ('+ip+')':'Desconectado'),'success');
-      return true;
-    }
-    if(line.indexOf('WIFI_OK|')===0){
-      var parts=line.split('|');
-      var ssid=parts[1]||'', ip=parts[2]||'';
-      var sb=document.getElementById('wifiStatusBox');
-      sb.style.display='block';
-      sb.innerHTML='<span class="ws-ok">✅ Conectado a <strong>'+ssid+'</strong></span><br>IP: <strong>'+ip+'</strong><br>Credenciales guardadas en flash 💾';
-      document.getElementById('dotWifi').className='dot on';
-      document.getElementById('wifiSt').textContent=ssid;
-      wifiWaitingResponse=false;
-      addLog('✅ WiFi conectado: '+ssid+' ('+ip+')','success');
-      return true;
-    }
-    if(line.indexOf('WIFI_FAIL|')===0){
-      var reason=line.substring(10);
-      var sb=document.getElementById('wifiStatusBox');
-      sb.style.display='block';
-      sb.innerHTML='<span class="ws-fail">❌ Fallo al conectar</span><br>'+reason;
-      document.getElementById('dotWifi').className='dot off';
-      document.getElementById('wifiSt').textContent='Fallo';
-      wifiWaitingResponse=false;
-      addLog('❌ WiFi fallo: '+reason,'error');
-      return true;
-    }
-    if(line.indexOf('WIFI_CLEARED')===0){
-      var sb=document.getElementById('wifiStatusBox');
-      sb.style.display='block';
-      sb.innerHTML='🗑 Credenciales borradas. Se usará red default al reiniciar.';
-      document.getElementById('dotWifi').className='dot off';
-      document.getElementById('wifiSt').textContent='--';
-      addLog('🗑 Credenciales WiFi borradas','warn');
-      return true;
-    }
-    return false;
-  }
-  function wifiSignalBars(rssi){
-    if(isNaN(rssi))return '';
-    if(rssi>-50)return '████';
-    if(rssi>-60)return '███▁';
-    if(rssi>-70)return '██▁▁';
-    return '█▁▁▁';
-  }
-
-  // ═══════════════════ STATUS ═══════════════════
-  function updSt(){
-    document.getElementById('dotMqtt').className='dot '+(isMqtt?'on':'off');
-    document.getElementById('mqttSt').textContent=isMqtt?'On':'Off';
-    document.getElementById('dotBle').className='dot '+(isBle?'on':'off');
-    document.getElementById('bleSt').textContent=isBle?'On':'Off';
-    var bm=document.getElementById('btnMqtt');
-    bm.textContent=isMqtt?'Desconectar MQTT':'Conectar MQTT';
-    bm.className='btn '+(isMqtt?'btn-disconnect':'btn-mqtt');
-    var bb=document.getElementById('btnBle');
-    bb.textContent=isBle?'🔌 Desconectar BLE':'🔗 Conectar BLE';
-    bb.className='btn '+(isBle?'btn-disconnect':'btn-ble');
-    updateWifiBtns();
-  }
-
-  // ═══════════════════ LOG ═══════════════════
-  function addLog(msg,type){
-    var el=document.getElementById('logList'),d=document.createElement('div');
-    var t=fmtTime(new Date()),cls='';
-    if(type==='success')cls='log-success';else if(type==='error')cls='log-error';else if(type==='warn')cls='log-warn';
-    d.innerHTML='<span class="log-time">['+t+']</span> '+(cls?'<span class="'+cls+'">'+msg+'</span>':msg);
-    el.appendChild(d);el.scrollTop=el.scrollHeight;
-    while(el.children.length>150)el.removeChild(el.firstChild);
-  }
-  function clearLog(){document.getElementById('logList').innerHTML='';addLog('Log limpiado','');}
-
-  // ═══════════════════ OVEN CHART ═══════════════════
-  var ovenChart = null;
-
-  // OVEN LIMIT LINES PLUGIN
-  const ovenLimitPlugin = {
-    id: "ovenLimits",
-    afterDatasetsDraw(chart, args, options) {
-      if (!window.ovenLimits) return;
-
-      const yScale = chart.scales.y;
-      const ctx = chart.ctx;
-
-      const minVal = (unit === 'F')
-        ? cToF(window.ovenLimits.min)
-        : window.ovenLimits.min;
-
-      const maxVal = (unit === 'F')
-        ? cToF(window.ovenLimits.max)
-        : window.ovenLimits.max;
-
-      ctx.save();
-      ctx.lineWidth = 1.5;
-
-      // Línea MIN
-      ctx.strokeStyle = "#00e676";
-      const yMin = yScale.getPixelForValue(minVal);
-      ctx.beginPath();
-      ctx.moveTo(chart.chartArea.left, yMin);
-      ctx.lineTo(chart.chartArea.right, yMin);
-      ctx.stroke();
-
-      // Línea MAX
-      ctx.strokeStyle = "#ff5252";
-      const yMax = yScale.getPixelForValue(maxVal);
-      ctx.beginPath();
-      ctx.moveTo(chart.chartArea.left, yMax);
-      ctx.lineTo(chart.chartArea.right, yMax);
-      ctx.stroke();
-
-      ctx.restore();
-    }
-  };
-
-  function initOvenChart() {
-    const ctx = document.getElementById("ovenChart").getContext("2d");
-
-    ovenChart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: [],
-        datasets: [{
-          label: "Oven Temp",
-          data: [],
-          borderColor: "#ff9800",
-          backgroundColor: "rgba(255,152,0,0.15)",
-          borderWidth: 2,
-          tension: 0.25,
-          fill: true,
-          pointRadius: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        scales: {
-          y: {
-            beginAtZero: false,
-            ticks: { color: "#e4e8f0" },
-            grid: { color: "rgba(255,255,255,0.1)" }
-          },
-          x: {
-            ticks: { color: "#e4e8f0" },
-            grid: { color: "rgba(255,255,255,0.1)" }
-          }
-        }
-      },
-      plugins: [ovenLimitPlugin]
-    });
-  }
-
-  function updateOvenChart(temp) {
-    if (!ovenChart) return;
-
-    const now = Date.now();
-    if (now - lastOvenUpdate < 1000) return;
-    lastOvenUpdate = now;
-
-    const t = fmtTime(new Date());
-
-    ovenChart.data.labels.push(t);
-    ovenChart.data.datasets[0].data.push(temp);
-
-    if (ovenChart.data.labels.length > 60) {
-      ovenChart.data.labels.shift();
-      ovenChart.data.datasets[0].data.shift();
-    }
-
-    const dataMin = Math.min(...ovenChart.data.datasets[0].data);
-    const dataMax = Math.max(...ovenChart.data.datasets[0].data);
-
-    const limitMin = (unit === 'F')
-      ? cToF(window.ovenLimits.min)
-      : window.ovenLimits.min;
-
-    const limitMax = (unit === 'F')
-      ? cToF(window.ovenLimits.max)
-      : window.ovenLimits.max;
-
-    const finalMin = Math.min(dataMin, limitMin) - 5;
-    const finalMax = Math.max(dataMax, limitMax) + 5;
-
-    ovenChart.options.scales.y.min = finalMin;
-    ovenChart.options.scales.y.max = finalMax;
-
-    ovenChart.update();
-  }
-
-  // === OVEN LIMITS UI ===
-  function setupOvenLimits() {
-    const presetSel = document.getElementById("ovenPreset");
-    const minInput = document.getElementById("ovenMin");
-    const maxInput = document.getElementById("ovenMax");
-    const btnApply = document.getElementById("applyOvenLimits");
-
-    // PRESETS OVEN
-    presetSel.onchange = () => {
-      const p = presetSel.value;
-
-      if (p !== "custom") {
-        minInput.value = getPresetValue(ovenPresets[p].min);
-        maxInput.value = getPresetValue(ovenPresets[p].max);
-
-        window.ovenLimits.min = ovenPresets[p].min;
-        window.ovenLimits.max = ovenPresets[p].max;
-
-        ovenChart.update();
-      }
-    };
-
-    // APLICAR LIMITES MANUALES
-    btnApply.onclick = () => {
-      const rawMin = parseFloat(minInput.value);
-      const rawMax = parseFloat(maxInput.value);
-
-      window.ovenLimits.min = (unit === 'F') ? fToC(rawMin) : rawMin;
-      window.ovenLimits.max = (unit === 'F') ? fToC(rawMax) : rawMax;
-
-      ovenChart.update();
-    };
-  }
-
-  // REFRESCAR UI DEL OVEN AL CAMBIAR UNIDAD
-  function refreshOvenUI() {
-    const presetSel = document.getElementById("ovenPreset");
-    const minInput = document.getElementById("ovenMin");
-    const maxInput = document.getElementById("ovenMax");
-
-    const p = presetSel.value;
-
-    if (p !== "custom") {
-      minInput.value = getPresetValue(ovenPresets[p].min);
-      maxInput.value = getPresetValue(ovenPresets[p].max);
-    } else {
-      minInput.value = (unit === 'F')
-        ? cToF(window.ovenLimits.min).toFixed(1)
-        : window.ovenLimits.min.toFixed(1);
-
-      maxInput.value = (unit === 'F')
-        ? cToF(window.ovenLimits.max).toFixed(1)
-        : window.ovenLimits.max.toFixed(1);
-    }
-  }
-
-  // REFRESCAR TEXTO DEL SELECTOR DE PRESETS
-  function refreshPresetList() {
-    const presetSel = document.getElementById("ovenPreset");
-
-    for (let key in ovenPresets) {
-      const opt = presetSel.querySelector(`option[value="${key}"]`);
-      if (!opt) continue;
-
-      const min = getPresetValue(ovenPresets[key].min);
-      const max = getPresetValue(ovenPresets[key].max);
-
-      opt.textContent = `${key.toUpperCase()} (${min}–${max}°${unit})`;
-    }
-  }
-function setOvenModeUI(mode) {
-  const autoBtn = document.getElementById("autoModeBtn");
-  const manualBtn = document.getElementById("manualModeBtn");
-
-  if (mode === "auto") {
-    autoBtn.classList.add("active");
-    manualBtn.classList.remove("active");
-  } else {
-    manualBtn.classList.add("active");
-    autoBtn.classList.remove("active");
-  }
-}
-  // SONIDO DE ALARMA (usa <audio id="alarmSound">)
-  function playAlarmSound() {
-    const snd = document.getElementById("alarmSound");
-    snd.loop = true;
-    snd.volume = 1.0;
-    snd.play().catch(e => console.log("Autoplay bloqueado"));
-  }
-
-  function stopAlarmSound() {
-    const snd = document.getElementById("alarmSound");
-    snd.pause();
-    snd.currentTime = 0;
-  }
-
-  // ═══════════════════ INIT ═══════════════════
-  window.addEventListener('load', function() {
-    buildCards();
-    buildLimits();
-    initChart();
-    initOvenChart();
-    updSt();
-    setupOvenLimits();
-
-    // OVEN: Sliders y botones
-    document.getElementById("servoInRange").addEventListener("input", function(e){
-      if (updatingServoIn) return;
-      if (mqttClient) mqttClient.publish("cesar/esp32/servoIn", e.target.value);
-    });
-
-    document.getElementById("servoOutRange").addEventListener("input", function(e){
-      if (updatingServoOut) return;
-      if (mqttClient) mqttClient.publish("cesar/esp32/servoOut", e.target.value);
-    });
-
-document.getElementById("autoModeBtn").onclick = function(){
-  if (mqttClient) mqttClient.publish("cesar/esp32/mode", "auto");
-  setOvenModeUI("auto");
-};
-
-document.getElementById("manualModeBtn").onclick = function(){
-  if (mqttClient) mqttClient.publish("cesar/esp32/mode", "manual");
-  setOvenModeUI("manual");
-};
-
-  });
-  </script>
+  <!-- OVEN AUTO AJUSTES -->
+  <div class="panel" id="panelAutoSettings">
+    <div class="Auto-Adjust">
+      <h2>Ajustes Automáticos</h2>
+
+      <div class="setting-block">
+        <label>Histeresis (°C): <span id="hystVal">--</span></label>
+        <input type="range" id="hystRange" min="1" max="10" step="0.5">
+      </div>
+
+      <div class="setting-block">
+        <label>Entrada Min: <span id="inMinVal">--</span></label>
+        <input type="range" id="inMinRange" min="0" max="90">
+      </div>
+
+      <div class="setting-block">
+        <label>Entrada Max: <span id="inMaxVal">--</span></label>
+        <input type="range" id="inMaxRange" min="0" max="90">
+      </div>
+
+      <div class="setting-block">
+        <label>Salida Min: <span id="outMinVal">--</span></label>
+        <input type="range" id="outMinRange" min="45" max="90">
+      </div>
+
+      <div class="setting-block">
+        <label>Salida Max: <span id="outMaxVal">--</span></label>
+        <input type="range" id="outMaxRange" min="45" max="90">
+      </div>
+
+      <div class="setting-block">
+        <label>Paso del Servo: <span id="stepVal">--</span></label>
+        <input type="range" id="stepRange" min="1" max="20">
+      </div>
+
+      <div class="setting-block">
+        <label>Periodo Control (ms): <span id="periodVal">--</span></label>
+        <input type="range" id="periodRange" min="500" max="20000" step="500">
+      </div>
+
+      <button id="applyAutoSettings" class="apply-btn">Aplicar Ajustes</button>
+    </div>
+  </div>
+
+  <div class="footer">Cesar's BBQ — ESP32 + BLE — v4.1 — 2026</div>
 
   <audio id="alarmSound">
     <source src="alarm.mp3" type="audio/mpeg">
   </audio>
+
+  <script>
+    document.getElementById("clearOvenChart").onclick = () => {
+      if (!window.ovenChart) return;
+      ovenChart.data.labels = [];
+      ovenChart.data.datasets[0].data = [];
+      ovenChart.update();
+    };
+
+    document.getElementById("muteAlarmBtn").onclick = () => {
+      stopAlarmSound();
+    };
+
+    let lastOvenTemp = null;
+
+    window.ovenLimits = { min: 150, max: 260 };
+    window.ovenSetpoint = 180;
+    const ovenPresets = {
+      smoke: { min: 90, max: 120 },
+      grill: { min: 180, max: 250 },
+      roast: { min: 160, max: 200 },
+      sear:  { min: 250, max: 300 },
+      pizza: { min: 300, max: 450 }
+    };
+
+    function getPresetValue(v) {
+      return unit === 'F' ? cToF(v) : v;
+    }
+
+    let lastOvenUpdate = 0;
+    let updatingServoIn = false;
+    let updatingServoOut = false;
+
+    var MAX_PTS=720, SC=['#00d4ff','#00e676','#ffab40','#ff5252'],
+        SBG=['rgba(0,212,255,0.08)','rgba(0,230,118,0.08)','rgba(255,171,64,0.08)','rgba(255,82,82,0.08)'];
+    var ZONES=['Zona A','Zona B','Zona C','Zona D'];
+    var mqttClient=null,isMqtt=false,chart=null,totalMsg=0,unit='C';
+    var sMin=[Infinity,Infinity,Infinity,Infinity], sMax=[-Infinity,-Infinity,-Infinity,-Infinity];
+    var limits=[{min:10,max:60},{min:10,max:60},{min:10,max:60},{min:10,max:60}];
+    var sensorProtein=[null,null,null,null], csvData=[];
+    var lastValues = [null, null, null, null];
+
+    var bleDevice=null, bleTx=null, bleRx=null, isBle=false, bleBuffer='';
+    var NUS_SVC='6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+    var NUS_RX='6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+    var NUS_TX='6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+
+    var profiles={
+      custom:null,
+      res_mr:{min:57,max:63,info:'Res Medio Rojo: 57-63 C. Centro rosado, jugosa.'},
+      res_mp:{min:63,max:68,info:'Res Medio: 63-68 C. Centro rosa palido.'},
+      res_mw:{min:66,max:71,info:'Res Medium-Well: 66-71 C. Ligeramente rosado, firme.'},
+      res_bc:{min:71,max:77,info:'Res Bien Cocida: 71-77 C. Sin rosado, firme.'},
+      pollo:{min:74,max:85,info:'Pollo: Min segura 74 C (USDA). Jugos claros.'},
+      cerdo:{min:63,max:74,info:'Cerdo: Min segura 63 C con reposo 3 min.'},
+      pescado:{min:63,max:68,info:'Pescado: 63 C. Carne opaca, se separa en hojuelas.'},
+      marisco:{min:63,max:74,info:'Mariscos: 63-74 C. Opacos y firmes.'},
+      pan:{min:88,max:96,info:'Pan/Reposteria: 88-96 C interna.'},
+      oven:{min:150,max:260,info:'OVEN: Temperatura ambiente del horno 150-260 C.'}
+    };
+
+    function cToF(c){return(c*9/5)+32;}
+    function fToC(f){return(f-32)*5/9;}
+    function dT(c){return unit==='F'?cToF(c).toFixed(1):c.toFixed(1);}
+    function uS(){return unit==='F'?'°F':'°C';}
+    function fmtTime(d){return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')+':'+d.getSeconds().toString().padStart(2,'0');}
+
+    function showTab(name){
+      var tabs = document.querySelectorAll('.tab'),
+          panels = document.querySelectorAll('.panel');
+
+      var map = {
+        monitor: 'panelMonitor',
+        connect: 'panelConnect',
+        settings: 'panelSettings',
+        chart: 'panelChart',
+        log: 'panelLog',
+        oven: 'panelOven',
+        autoSettings: 'panelAutoSettings'
+      };
+
+      var names = ['monitor','connect','settings','chart','log','oven','autoSettings'];
+
+      tabs.forEach(t => t.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+
+      var idx = names.indexOf(name);
+      if (idx >= 0) tabs[idx].classList.add('active');
+
+      document.getElementById(map[name]).classList.add('active');
+
+      if (name === 'chart' && chart) chart.resize();
+    }
+
+    function buildCards(){
+      var g=document.getElementById('sensorsGrid');
+      g.innerHTML='';
+      for(var i=0;i<4;i++){
+        g.innerHTML+=
+          '<div class="sensor-card">'+
+            '<div class="s-label">◆ '+ZONES[i]+'</div>'+
+            '<div class="s-value" id="v'+(i+1)+'">--.-</div>'+
+            '<div class="s-unit" id="u'+(i+1)+'">'+uS()+'</div>'+
+            '<div class="s-alarm a-ok" id="a'+(i+1)+'">--</div><br>'+
+            '<div class="s-protein hidden" id="sp'+(i+1)+'"></div>'+
+            '<div class="s-limits" id="sl'+(i+1)+'">Lim: <strong>'+dT(limits[i].min)+' — '+dT(limits[i].max)+'</strong> '+uS()+'</div>'+
+            '<div class="s-bar"><div class="s-bar-fill" id="b'+(i+1)+'"></div></div>'+
+            '<div class="s-minmax"><span>Min:<span class="mn" id="mn'+(i+1)+'">--</span></span><span>Max:<span class="mx" id="mx'+(i+1)+'">--</span></span></div>'+
+          '</div>';
+      }
+    }
+
+    function buildLimits(){
+      var c=document.getElementById('limitsContainer');
+      c.innerHTML='';
+      for(var i=0;i<4;i++){
+        var mn=unit==='F'?cToF(limits[i].min):limits[i].min;
+        var mx=unit==='F'?cToF(limits[i].max):limits[i].max;
+        c.innerHTML+=
+          '<div class="limit-row">'+
+            '<label>'+ZONES[i]+':</label>'+
+            '<span style="color:var(--muted);font-size:0.65rem">Min</span>'+
+            '<input type="number" class="limit-input" id="lm'+(i+1)+'" value="'+(Math.round(mn*10)/10)+'" step="0.5">'+
+            '<span style="color:var(--muted);font-size:0.65rem">Max</span>'+
+            '<input type="number" class="limit-input" id="lx'+(i+1)+'" value="'+(Math.round(mx*10)/10)+'" step="0.5">'+
+            '<span style="font-size:0.65rem;color:var(--muted)">'+uS()+'</span>'+
+            '<button class="btn-apply-sensor" onclick="applyProteinToSensor('+i+')">🥩</button>'+
+            '<span class="protein-tag" id="pt'+(i+1)+'" style="display:'+(sensorProtein[i]?'inline':'none')+'">'+
+              (sensorProtein[i]||'')+
+            '</span>'+
+          '</div>';
+      }
+    }
+
+    function setUnit(u){
+      unit=u;
+      document.getElementById('btnC').className='unit-btn'+(u==='C'?' active':'');
+      document.getElementById('btnF').className='unit-btn'+(u==='F'?' active':'');
+      buildLimits();
+      refreshCards();
+      updateChartUnit();
+      refreshOvenUI();
+      refreshPresetList();
+      addLog('🌡 Unidad: '+uS(),'warn');
+    }
+
+    function onProteinChange(){
+      var sel=document.getElementById('proteinSel').value;
+      var p=profiles[sel], info=document.getElementById('proteinInfo');
+      if(!p){info.textContent='Modo personalizado.';return;}
+      info.innerHTML=p.info+'<br><strong style="color:var(--accent)">↑ Pulsa 🥩 en cada zona para aplicar.</strong>';
+    }
+
+    function applyProteinToSensor(idx){
+      var sel=document.getElementById('proteinSel').value;
+      var p=profiles[sel];
+      if(!p){addLog('⚠ Selecciona una proteina','warn');return;}
+      limits[idx].min=p.min; limits[idx].max=p.max;
+      var selectEl=document.getElementById('proteinSel');
+      sensorProtein[idx]=selectEl.options[selectEl.selectedIndex].text;
+      buildLimits(); refreshLimDisp(); refreshAlarms();
+      var cp=document.getElementById('sp'+(idx+1));
+      cp.textContent='🥩 '+sensorProtein[idx]; cp.className='s-protein';
+      addLog('🥩 '+ZONES[idx]+' → '+sensorProtein[idx],'success');
+    }
+
+    function applyManualLimits(){
+      for(var i=0;i<4;i++){
+        var mn=parseFloat(document.getElementById('lm'+(i+1)).value)||0;
+        var mx=parseFloat(document.getElementById('lx'+(i+1)).value)||100;
+        limits[i].min=unit==='F'?fToC(mn):mn;
+        limits[i].max=unit==='F'?fToC(mx):mx;
+      }
+      refreshLimDisp(); refreshAlarms();
+      addLog('✅ Limites actualizados','success');
+    }
+
+    function refreshCards(){
+      for(var i=0;i<4;i++){
+        var ve=document.getElementById('v'+(i+1));
+        document.getElementById('u'+(i+1)).textContent=uS();
+        if(ve.dataset.c!==undefined&&ve.dataset.c!==''){
+          ve.textContent=dT(parseFloat(ve.dataset.c));
+        }
+        if(sMin[i]!==Infinity)document.getElementById('mn'+(i+1)).textContent=dT(sMin[i])+uS();
+        if(sMax[i]!==-Infinity)document.getElementById('mx'+(i+1)).textContent=dT(sMax[i])+uS();
+      }
+      refreshLimDisp(); refreshAlarms();
+    }
+
+    function refreshLimDisp(){
+      for(var i=0;i<4;i++){
+        var el=document.getElementById('sl'+(i+1));
+        if(el)el.innerHTML='Lim: <strong>'+dT(limits[i].min)+' — '+dT(limits[i].max)+'</strong> '+uS();
+      }
+    }
+
+    function refreshAlarms(){
+      for(var i=0;i<4;i++){
+        var ve=document.getElementById('v'+(i+1));
+        if(!ve||ve.dataset.c===undefined||ve.dataset.c==='')continue;
+        updateAlarm(i+1,parseFloat(ve.dataset.c));
+      }
+    }
+
+    function updateAlarm(idx,c){
+      var el=document.getElementById('a'+idx), lim=limits[idx-1];
+      var dmn=dT(lim.min), dmx=dT(lim.max);
+      if(c<lim.min){el.className='s-alarm a-warn';el.textContent='COCINANDO A ('+dmn+'-'+dmx+uS()+')';}
+      else if(c>lim.max){el.className='s-alarm a-danger';el.textContent='🚨PASO PUNTO DE ('+dmx+uS()+')';}
+      else{el.className='s-alarm a-ok';el.textContent='TERMINADO 🥩';}
+    }
+
+    function updateSensors(data){
+      var keys=['s1','s2','s3','s4'];
+      for(var i=0;i<4;i++){
+        var val=parseFloat(data[keys[i]]);
+        if(isNaN(val))continue;
+        lastValues[i] = val;
+        var ve=document.getElementById('v'+(i+1));
+        ve.dataset.c=val; ve.textContent=dT(val);
+        var pct=Math.min(Math.max((val/100)*100,0),100);
+        document.getElementById('b'+(i+1)).style.width=pct+'%';
+        if(val<sMin[i])sMin[i]=val;
+        if(val>sMax[i])sMax[i]=val;
+        document.getElementById('mn'+(i+1)).textContent=dT(sMin[i])+uS();
+        document.getElementById('mx'+(i+1)).textContent=dT(sMax[i])+uS();
+        updateAlarm(i+1,val);
+      }
+    }
+
+    function initChart() {
+      var ctx = document.getElementById('tempChart').getContext('2d');
+
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            { label:'A', data:[], borderColor:SC[0], backgroundColor:SBG[0], borderWidth:1.5, tension:0.3, fill:true, pointRadius:1 },
+            { label:'B', data:[], borderColor:SC[1], backgroundColor:SBG[1], borderWidth:1.5, tension:0.3, fill:true, pointRadius:1 },
+            { label:'C', data:[], borderColor:SC[2], backgroundColor:SBG[2], borderWidth:1.5, tension:0.3, fill:true, pointRadius:1 },
+            { label:'D', data:[], borderColor:SC[3], backgroundColor:SBG[3], borderWidth:1.5, tension:0.3, fill:true, pointRadius:1 }
+          ]
+        },
+
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 300 },
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            zoom: {
+              zoom: {
+                wheel: { enabled: true },
+                pinch: { enabled: true },
+                mode: 'x'
+              },
+              pan: {
+                enabled: true,
+                mode: 'x'
+              }
+            },
+            legend: {
+              labels: {
+                color: '#e4e8f0',
+                usePointStyle: true,
+                pointStyle: 'circle',
+                padding: 10,
+                font: { size: 10 }
+              }
+            },
+            tooltip: {
+              backgroundColor: '#1a2736',
+              titleColor: '#e4e8f0',
+              bodyColor: '#e4e8f0',
+              borderColor: '#2a3a4a',
+              borderWidth: 1,
+              cornerRadius: 6,
+              padding: 8
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#7c8594', maxTicksLimit: 8, font: { size: 9 } },
+              grid: { color: 'rgba(30,42,58,0.4)' }
+            },
+            y: {
+              ticks: {
+                color: '#7c8594',
+                font: { size: 9 },
+                callback: function(v) { return v + (unit === 'F' ? ' F' : ' C'); }
+              },
+              grid: { color: 'rgba(30,42,58,0.4)' },
+              suggestedMin: 0,
+              suggestedMax: 60
+            }
+          }
+        }
+      });
+    }
+
+    function addChartPoint(data){
+      var t=fmtTime(new Date());
+      var s1=parseFloat(data.s1)||0,s2=parseFloat(data.s2)||0,s3=parseFloat(data.s3)||0,s4=parseFloat(data.s4)||0;
+      var now=new Date();
+      csvData.push({date:now.toISOString().slice(0,10),time:t,s1:s1,s2:s2,s3:s3,s4:s4,oven:lastOvenTemp});
+      chart.data.labels.push(t);
+      chart.data.datasets[0].data.push(unit==='F'?cToF(s1):s1);
+      chart.data.datasets[1].data.push(unit==='F'?cToF(s2):s2);
+      chart.data.datasets[2].data.push(unit==='F'?cToF(s3):s3);
+      chart.data.datasets[3].data.push(unit==='F'?cToF(s4):s4);
+      if(chart.data.labels.length>MAX_PTS){chart.data.labels.shift();chart.data.datasets.forEach(ds=>ds.data.shift());}
+      chart.update('none');
+    }
+
+    function updateChartUnit(){
+      if(!chart)return;
+      chart.options.scales.y.ticks.callback=function(v){return v+(unit==='F'?' F':' C');};
+      chart.data.labels=[];
+      for(var d=0;d<4;d++)chart.data.datasets[d].data=[];
+      var st=Math.max(0,csvData.length-MAX_PTS);
+      for(var j=st;j<csvData.length;j++){
+        var r=csvData[j];
+        chart.data.labels.push(r.time);
+        for(var d=0;d<4;d++){var v=r['s'+(d+1)];chart.data.datasets[d].data.push(unit==='F'?cToF(v):v);}
+      }
+      chart.update();
+    }
+
+    function resetAll(){
+      if(chart){
+        chart.data.labels=[];chart.data.datasets.forEach(ds=>ds.data=[]);chart.update();
+      }
+      sMin=[Infinity,Infinity,Infinity,Infinity];sMax=[-Infinity,-Infinity,-Infinity,-Infinity];csvData=[];
+      for(var i=1;i<=4;i++){
+        document.getElementById('mn'+i).textContent='--';
+        document.getElementById('mx'+i).textContent='--';
+        document.getElementById('a'+i).className='s-alarm a-ok';
+        document.getElementById('a'+i).textContent='--';
+      }
+      addLog('🔄 Reset completo','warn');
+    }
+
+    function downloadCSV(){
+      if(!csvData.length){addLog('⚠ Sin datos','warn');return;}
+      var ul=unit==='F'?'F':'C';
+      var h='Fecha,Hora,ZonaA('+ul+'),ZonaB('+ul+'),ZonaC('+ul+'),ZonaD('+ul+'),Alarm_A,Alarm_B,Alarm_C,Alarm_D,Oven_Temp';
+      var lines=[h];
+      for(var i=0;i<csvData.length;i++){
+        var r=csvData[i],vs=[],al=[];
+        for(var s=1;s<=4;s++){
+          var c=r['s'+s];
+          vs.push(unit==='F'?cToF(c).toFixed(1):c.toFixed(1));
+          var lm=limits[s-1];
+          al.push(c<lm.min?'BAJA':c>lm.max?'ALTA':'OK');
+        }
+        lines.push(
+          r.date+','+
+          r.time+','+
+          vs.join(',')+','+
+          al.join(',')+','+
+          (r.oven!==null?(unit==='F'?cToF(r.oven).toFixed(1):r.oven.toFixed(1)):'')
+        );
+      }
+      var blob=new Blob([lines.join('\n')],{type:'text/csv'}),a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);a.download='cesars_bbq_'+new Date().toISOString().slice(0,10)+'.csv';
+      a.click();URL.revokeObjectURL(a.href);
+      addLog('💾 CSV: '+csvData.length+' registros','success');
+    }
+
+    function handleData(data){
+      updateSensors(data);
+      addChartPoint(data);
+      totalMsg++;
+      document.getElementById('msgCount').textContent = totalMsg;
+      document.getElementById('lastTime').textContent = fmtTime(new Date());
+      var logMsg =
+        'S1:' + dT(parseFloat(data.s1)) +
+        ' S2:' + dT(parseFloat(data.s2)) +
+        ' S3:' + dT(parseFloat(data.s3)) +
+        ' S4:' + dT(parseFloat(data.s4)) +
+        ' OVEN:' + (lastOvenTemp !== null ? (unit === 'F' ? cToF(lastOvenTemp).toFixed(1) : lastOvenTemp.toFixed(1))
+        : '--'
+      )
+      +
+        ' ' + uS();
+      addLog('📨 #' + totalMsg + ' ' + logMsg, '');
+    }
+
+    function checkGlobalAlarm() {
+      let alarm = false;
+      let msg = "";
+      for (let i = 0; i < 4; i++) {
+        const v = lastValues[i];
+        if (v == null) continue;
+        const min = limits[i].min;
+        const max = limits[i].max;
+        if (v > max) {
+          alarm = true;
+          msg = `${ZONES[i]} ALTA (${dT(v)} > ${dT(max)})`;
+          break;
+        }
+      }
+      if (!alarm && lastOvenTemp != null) {
+        if (lastOvenTemp < window.ovenLimits.min) {
+          alarm = true;
+          msg = `HORNO BAJO (${dT(lastOvenTemp)} < ${dT(window.ovenLimits.min)})`;
+        }
+        if (lastOvenTemp > window.ovenLimits.max) {
+          alarm = true;
+          msg = `HORNO ALTO (${dT(lastOvenTemp)} > ${dT(window.ovenLimits.max)})`;
+        }
+      }
+      const box = document.getElementById("globalAlarm");
+      const txt = document.getElementById("globalAlarmText");
+      if (alarm) {
+        txt.textContent = msg;
+        box.classList.remove("hidden");
+        playAlarmSound();
+      } else {
+        box.classList.add("hidden");
+        stopAlarmSound();
+      }
+    }
+
+    function toggleMQTT(){if(isMqtt)disconnectMQTT();else connectMQTT();}
+
+    // referencias globales para sliders de auto ajustes
+    let hystRange, inMinRange, inMaxRange, outMinRange, outMaxRange, stepRange, periodRange;
+    let hystVal, inMinVal, inMaxVal, outMinVal, outMaxVal, stepVal, periodVal;
+
+    function connectMQTT(){
+      var url=document.getElementById('brokerUrl').value.trim(), topic=document.getElementById('topic').value.trim();
+      if(!url||!topic){addLog('❌ Ingresa Broker y Topico','error');return;}
+      addLog('Conectando MQTT...','');
+      try{
+        mqttClient = mqtt.connect(url, {
+          clientId: 'bbq_' + Math.random().toString(16).substr(2,8),
+          clean: true,
+          connectTimeout: 10000,
+          reconnectPeriod: 5000
+        });
+        mqttClient.on('connect', function(){
+          isMqtt = true;
+          updSt();
+          addLog('✅ MQTT conectado','success');
+          mqttClient.subscribe("esp32/ntc/data");
+          mqttClient.subscribe("cesar/esp32/oven");
+          mqttClient.subscribe("cesar/esp32/servoIn/state");
+          mqttClient.subscribe("cesar/esp32/servoOut/state");
+          mqttClient.subscribe("cesar/esp32/mode/state");
+          mqttClient.subscribe("cesar/esp32/auto/hyst/state");
+          mqttClient.subscribe("cesar/esp32/auto/inMin/state");
+          mqttClient.subscribe("cesar/esp32/auto/inMax/state");
+          mqttClient.subscribe("cesar/esp32/auto/outMin/state");
+          mqttClient.subscribe("cesar/esp32/auto/outMax/state");
+          mqttClient.subscribe("cesar/esp32/auto/step/state");
+          mqttClient.subscribe("cesar/esp32/auto/period/state");
+        });
+
+        mqttClient.on('message', function (t, m) {
+          const msg = m.toString();
+
+          if (t === 'cesar/esp32/servoIn/state') {
+            const angle = parseInt(msg, 10);
+            const r = document.getElementById("servoInRange");
+            const l = document.getElementById("servoInPosLabel");
+            if (r && l) {
+              updatingServoIn = true;
+              r.value = angle;
+              l.textContent = angle + '°';
+              setTimeout(() => updatingServoIn = false, 50);
+            }
+            return;
+          }
+
+          if (t === 'cesar/esp32/servoOut/state') {
+            const angle = parseInt(msg, 10);
+            const r = document.getElementById("servoOutRange");
+            const l = document.getElementById("servoOutPosLabel");
+            if (r && l) {
+              updatingServoOut = true;
+              r.value = angle;
+              l.textContent = angle + '°';
+              setTimeout(() => updatingServoOut = false, 50);
+            }
+            return;
+          }
+
+          if (t === "cesar/esp32/mode/state") {
+            const mode = m.toString().trim();
+            setOvenModeUI(mode);
+            return;
+          }
+
+          if (t === "cesar/esp32/oven") {
+            var tempC = parseFloat(m.toString());
+            if (!isNaN(tempC)) {
+              lastOvenTemp = tempC;
+              const shown = (unit === 'F')
+                ? cToF(tempC).toFixed(1) + "°F"
+                : tempC.toFixed(1) + "°C";
+              document.getElementById("oven-temp-display").innerText = shown;
+              const graphValue = (unit === 'F') ? cToF(tempC) : tempC;
+              updateOvenChart(graphValue);
+              checkGlobalAlarm();
+            }
+            return;
+          }
+
+          // AUTO SETTINGS STATE (desde ESP32)
+          if (t === "cesar/esp32/auto/hyst/state") {
+            if (hystRange && hystVal) {
+              hystRange.value = msg;
+              hystVal.innerText = msg;
+            }
+            return;
+          }
+          if (t === "cesar/esp32/auto/inMin/state") {
+            if (inMinRange && inMinVal) {
+              inMinRange.value = msg;
+              inMinVal.innerText = msg;
+            }
+            return;
+          }
+          if (t === "cesar/esp32/auto/inMax/state") {
+            if (inMaxRange && inMaxVal) {
+              inMaxRange.value = msg;
+              inMaxVal.innerText = msg;
+            }
+            return;
+          }
+          if (t === "cesar/esp32/auto/outMin/state") {
+            if (outMinRange && outMinVal) {
+              outMinRange.value = msg;
+              outMinVal.innerText = msg;
+            }
+            return;
+          }
+          if (t === "cesar/esp32/auto/outMax/state") {
+            if (outMaxRange && outMaxVal) {
+              outMaxRange.value = msg;
+              outMaxVal.innerText = msg;
+            }
+            return;
+          }
+          if (t === "cesar/esp32/auto/step/state") {
+            if (stepRange && stepVal) {
+              stepRange.value = msg;
+              stepVal.innerText = msg;
+            }
+            return;
+          }
+          if (t === "cesar/esp32/auto/period/state") {
+            if (periodRange && periodVal) {
+              periodRange.value = msg;
+              periodVal.innerText = msg;
+            }
+            return;
+          }
+
+          // JSON SENSORS
+          try {
+            var d = JSON.parse(m.toString());
+            if (d.s1 !== undefined) {
+              handleData(d);
+              checkGlobalAlarm();
+            }
+          } catch (e) {
+            addLog('⚠ Mensaje invalido','warn');
+          }
+        });
+
+        mqttClient.on('error', function(e){
+          addLog('❌ Error: ' + e.message, 'error');
+        });
+
+        mqttClient.on('close', function(){
+          if(isMqtt){
+            isMqtt = false;
+            updSt();
+            addLog('🔌 MQTT cerrado','warn');
+          }
+        });
+
+      } catch(e){
+        addLog('❌ ' + e.message, 'error');
+      }
+    }
+
+    function disconnectMQTT(){
+      if(mqttClient){mqttClient.end(true); mqttClient=null;}
+      isMqtt=false;
+      updSt();
+      addLog('🔌 MQTT desconectado','');
+    }
+
+    async function toggleBLE(){if(isBle)disconnectBLE();else await connectBLE();}
+
+    async function connectBLE(){
+      if(!navigator.bluetooth){addLog('❌ Tu navegador no soporta Web Bluetooth. Usa Chrome en Android.','error');return;}
+      try{
+        addLog('🔎 Buscando CesarBBQ...','');
+        bleDevice=await navigator.bluetooth.requestDevice({filters:[{services:[NUS_SVC]}],optionalServices:[NUS_SVC]});
+        bleDevice.addEventListener('gattserverdisconnected',function(){
+          isBle=false;updSt();addLog('🔌 BLE desconectado','warn');
+          document.getElementById('bleTerminal').style.display='none';
+        });
+        addLog('Conectando GATT...','');
+        var server=await bleDevice.gatt.connect();
+        var svc=await server.getPrimaryService(NUS_SVC);
+        bleTx=await svc.getCharacteristic(NUS_TX);
+        bleRx=await svc.getCharacteristic(NUS_RX);
+        await bleTx.startNotifications();
+        bleTx.addEventListener('characteristicvaluechanged',function(e){
+          var val=new TextDecoder().decode(e.target.value);
+          bleBuffer+=val;
+          var nlIdx=bleBuffer.indexOf('\n');
+          while(nlIdx>=0){
+            var line=bleBuffer.substring(0,nlIdx).trim();
+            bleBuffer=bleBuffer.substring(nlIdx+1);
+            if(line.length>0)handleBLERx(line);
+            nlIdx=bleBuffer.indexOf('\n');
+          }
+        });
+        isBle=true;updSt();
+        document.getElementById('bleTerminal').style.display='block';
+        addLog('✅ BLE conectado a CesarBBQ','success');
+        addBleLog('Conectado. Escribe un comando o usa los botones rapidos.','#00e676');
+      }catch(e){
+        if(e.name!=='NotFoundError')addLog('❌ BLE: '+e.message,'error');
+        else addLog('⚠ Busqueda cancelada','warn');
+      }
+    }
+
+    function disconnectBLE(){
+      if(bleDevice&&bleDevice.gatt.connected)bleDevice.gatt.disconnect();
+      isBle=false;updSt();document.getElementById('bleTerminal').style.display='none';
+    }
+
+    async function sendBLEData(str){
+      if(!isBle||!bleRx)return;
+      var enc=new TextEncoder();
+      var data=enc.encode(str+'\n');
+      var chunk=200;
+      for(var i=0;i<data.length;i+=chunk){
+        var end=Math.min(i+chunk,data.length);
+        await bleRx.writeValueWithoutResponse(data.slice(i,end));
+        if(end<data.length)await new Promise(r=>setTimeout(r,20));
+      }
+    }
+
+    function sendBLECmd(){
+      var inp=document.getElementById('bleInput'),cmd=inp.value.trim();
+      if(!cmd)return;
+      addBleLog('> '+cmd,'#00d4ff');
+      sendBLEData(cmd);
+      inp.value='';
+    }
+
+    function sendBLEQuick(cmd){addBleLog('> '+cmd,'#00d4ff');sendBLEData(cmd);}
+
+    function handleBLERx(line){
+      addBleLog(line,'#e4e8f0');
+      if(handleWifiResponse(line))return;
+      try{
+        var obj=JSON.parse(line);
+        if(obj.s1!==undefined){handleData(obj);checkGlobalAlarm();}
+      }catch(e){}
+    }
+
+    function addBleLog(msg,color){
+      var el=document.getElementById('bleOutput');
+      var d=document.createElement('div');
+      d.style.color=color||'#7c8594';
+      d.textContent=msg;
+      el.appendChild(d);
+      el.scrollTop=el.scrollHeight;
+      while(el.children.length>100)el.removeChild(el.firstChild);
+    }
+
+    var wifiWaitingResponse=false;
+
+    function updateWifiBtns(){
+      var en=isBle;
+      document.getElementById('btnWifiConnect').disabled=!en;
+      document.getElementById('btnWifiScan').disabled=!en;
+      document.getElementById('btnWifiStatus').disabled=!en;
+      document.getElementById('btnWifiClear').disabled=!en;
+    }
+
+    function togglePswVis(){
+      var inp=document.getElementById('wifiPSW');
+      inp.type=inp.type==='password'?'text':'password';
+    }
+
+    function wifiConnect(){
+      if(!isBle){addLog('❌ Conecta BLE primero','error');return;}
+      var ssid=document.getElementById('wifiSSID').value.trim();
+      var psw=document.getElementById('wifiPSW').value;
+      if(!ssid){addLog('❌ Ingresa el nombre de la red (SSID)','error');return;}
+      var cmd='wifi:'+ssid+','+psw;
+      addBleLog('> '+cmd.replace(psw,'****'),'#ff9800');
+      sendBLEData(cmd);
+      addLog('📡 Enviando credenciales WiFi al ESP32...','warn');
+      wifiWaitingResponse=true;
+      var sb=document.getElementById('wifiStatusBox');
+      sb.style.display='block';
+      sb.innerHTML='⏳ Conectando a <strong>'+ssid+'</strong>... (puede tomar 10-15 seg)';
+    }
+
+    function wifiScan(){
+      if(!isBle){addLog('❌ Conecta BLE primero','error');return;}
+      addBleLog('> wifi:scan','#ff9800');
+      sendBLEData('wifi:scan');
+      addLog('🔎 Escaneando redes WiFi...','warn');
+      wifiWaitingResponse=true;
+      var sr=document.getElementById('wifiScanResults');
+      sr.style.display='block';
+      sr.innerHTML='<h4>🔎 Escaneando...</h4>';
+    }
+
+    function wifiStatus(){
+      if(!isBle){addLog('❌ Conecta BLE primero','error');return;}
+      addBleLog('> wifi:status','#ff9800');
+      sendBLEData('wifi:status');
+      wifiWaitingResponse=true;
+      var sb=document.getElementById('wifiStatusBox');
+      sb.style.display='block';
+      sb.innerHTML='⏳ Consultando estado WiFi...';
+    }
+
+    function wifiClear(){
+      if(!isBle){addLog('❌ Conecta BLE primero','error');return;}
+      if(!confirm('¿Borrar credenciales WiFi guardadas en el ESP32?'))return;
+      addBleLog('> wifi:clear','#ff9800');
+      sendBLEData('wifi:clear');
+      addLog('🗑 Borrando credenciales WiFi...','warn');
+      document.getElementById('wifiSSID').value='';
+      document.getElementById('wifiPSW').value='';
+    }
+
+    function handleWifiResponse(line){
+      if(line.indexOf('SCAN|')===0){
+        var parts=line.split('|');
+        var count=parseInt(parts[1])||0;
+        var sr=document.getElementById('wifiScanResults');
+        sr.style.display='block';
+        sr.innerHTML='<h4>📶 Redes encontradas ('+count+')</h4>';
+        return true;
+      }
+      if(line.indexOf('NET|')===0){
+        var parts=line.split('|');
+        var ssid=parts[1]||'?', rssi=parts[2]||'?', enc=parts[3]==='1';
+        var sr=document.getElementById('wifiScanResults');
+        var div=document.createElement('div');
+        div.className='wifi-net';
+        div.innerHTML='<span><span class="wifi-net-lock">'+(enc?'🔒':'🔓')+'</span> <span class="wifi-net-name">'+ssid+'</span></span><span class="wifi-net-rssi">'+rssi+' dBm '+wifiSignalBars(parseInt(rssi))+'</span>';
+        div.onclick=function(){document.getElementById('wifiSSID').value=ssid;addLog('✅ Red seleccionada: '+ssid,'success');};
+        sr.appendChild(div);
+        return true;
+      }
+      if(line.indexOf('SCAN_END')===0){
+        wifiWaitingResponse=false;
+        addLog('✅ Escaneo WiFi completado','success');
+        return true;
+      }
+      if(line.indexOf('WIFIST|')===0){
+        var parts=line.split('|');
+        var conn=parts[1]==='1', ssid=parts[2]||'--', ip=parts[3]||'--',
+            rssi=parts[4]||'--', mqttOk=parts[5]==='1', saved=parts[6]||'--';
+        var sb=document.getElementById('wifiStatusBox');
+        sb.style.display='block';
+        sb.innerHTML=
+          '<div>Estado: '+(conn?'<span class="ws-ok">✅ Conectado</span>':'<span class="ws-fail">❌ Desconectado</span>')+'</div>'+
+          '<div>Red: <strong>'+ssid+'</strong></div>'+
+          '<div>IP: <strong>'+ip+'</strong></div>'+
+          '<div>Señal: <strong>'+rssi+' dBm</strong> '+wifiSignalBars(parseInt(rssi))+'</div>'+
+          '<div>MQTT: '+(mqttOk?'<span class="ws-ok">✅ Conectado</span>':'<span class="ws-fail">❌ Desconectado</span>')+'</div>'+
+          '<div>Red guardada: <strong>'+saved+'</strong></div>';
+        document.getElementById('dotWifi').className='dot '+(conn?'on':'off');
+        document.getElementById('wifiSt').textContent=conn?ssid:'Off';
+        wifiWaitingResponse=false;
+        addLog('📶 WiFi: '+(conn?ssid+' ('+ip+')':'Desconectado'),'success');
+        return true;
+      }
+      if(line.indexOf('WIFI_OK|')===0){
+        var parts=line.split('|');
+        var ssid=parts[1]||'', ip=parts[2]||'';
+        var sb=document.getElementById('wifiStatusBox');
+        sb.style.display='block';
+        sb.innerHTML='<span class="ws-ok">✅ Conectado a <strong>'+ssid+'</strong></span><br>IP: <strong>'+ip+'</strong><br>Credenciales guardadas en flash 💾';
+        document.getElementById('dotWifi').className='dot on';
+        document.getElementById('wifiSt').textContent=ssid;
+        wifiWaitingResponse=false;
+        addLog('✅ WiFi conectado: '+ssid+' ('+ip+')','success');
+        return true;
+      }
+      if(line.indexOf('WIFI_FAIL|')===0){
+        var reason=line.substring(10);
+        var sb=document.getElementById('wifiStatusBox');
+        sb.style.display='block';
+        sb.innerHTML='<span class="ws-fail">❌ Fallo al conectar</span><br>'+reason;
+        document.getElementById('dotWifi').className='dot off';
+        document.getElementById('wifiSt').textContent='Fallo';
+        wifiWaitingResponse=false;
+        addLog('❌ WiFi fallo: '+reason,'error');
+        return true;
+      }
+      if(line.indexOf('WIFI_CLEARED')===0){
+        var sb=document.getElementById('wifiStatusBox');
+        sb.style.display='block';
+        sb.innerHTML='🗑 Credenciales borradas. Se usará red default al reiniciar.';
+        document.getElementById('dotWifi').className='dot off';
+        document.getElementById('wifiSt').textContent='--';
+        addLog('🗑 Credenciales WiFi borradas','warn');
+        return true;
+      }
+      return false;
+    }
+
+    function wifiSignalBars(rssi){
+      if(isNaN(rssi))return '';
+      if(rssi>-50)return '████';
+      if(rssi>-60)return '███▁';
+      if(rssi>-70)return '██▁▁';
+      return '█▁▁▁';
+    }
+
+    function updSt(){
+      document.getElementById('dotMqtt').className='dot '+(isMqtt?'on':'off');
+      document.getElementById('mqttSt').textContent=isMqtt?'On':'Off';
+      document.getElementById('dotBle').className='dot '+(isBle?'on':'off');
+      document.getElementById('bleSt').textContent=isBle?'On':'Off';
+      var bm=document.getElementById('btnMqtt');
+      bm.textContent=isMqtt?'Desconectar MQTT':'Conectar MQTT';
+      bm.className='btn '+(isMqtt?'btn-disconnect':'btn-mqtt');
+      var bb=document.getElementById('btnBle');
+      bb.textContent=isBle?'🔌 Desconectar BLE':'🔗 Conectar BLE';
+      bb.className='btn '+(isBle?'btn-disconnect':'btn-ble');
+      updateWifiBtns();
+    }
+
+    function addLog(msg,type){
+      var el=document.getElementById('logList'),d=document.createElement('div');
+      var t=fmtTime(new Date()),cls='';
+      if(type==='success')cls='log-success';else if(type==='error')cls='log-error';else if(type==='warn')cls='log-warn';
+      d.innerHTML='<span class="log-time">['+t+']</span> '+(cls?'<span class="'+cls+'">'+msg+'</span>':msg);
+      el.appendChild(d);el.scrollTop=el.scrollHeight;
+      while(el.children.length>150)el.removeChild(el.firstChild);
+    }
+
+    function clearLog(){document.getElementById('logList').innerHTML='';addLog('Log limpiado','');}
+
+    var ovenChart = null;
+
+    const ovenLimitPlugin = {
+      id: "ovenLimits",
+      afterDatasetsDraw(chart, args, options) {
+        if (!window.ovenLimits) return;
+        const yScale = chart.scales.y;
+        const ctx = chart.ctx;
+        const minVal = (unit === 'F')
+          ? cToF(window.ovenLimits.min)
+          : window.ovenLimits.min;
+        const maxVal = (unit === 'F')
+          ? cToF(window.ovenLimits.max)
+          : window.ovenLimits.max;
+        ctx.save();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = "#00e676";
+        const yMin = yScale.getPixelForValue(minVal);
+        ctx.beginPath();
+        ctx.moveTo(chart.chartArea.left, yMin);
+        ctx.lineTo(chart.chartArea.right, yMin);
+        ctx.stroke();
+        ctx.strokeStyle = "#ff5252";
+        const yMax = yScale.getPixelForValue(maxVal);
+        ctx.beginPath();
+        ctx.moveTo(chart.chartArea.left, yMax);
+        ctx.lineTo(chart.chartArea.right, yMax);
+        ctx.stroke();
+        ctx.restore();
+      }
+    };
+
+    function initOvenChart() {
+      const ctx = document.getElementById("ovenChart").getContext("2d");
+
+      ovenChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [{
+            label: "Oven Temp",
+            data: [],
+            borderColor: "#ff9800",
+            backgroundColor: "rgba(255,152,0,0.15)",
+            borderWidth: 2,
+            tension: 0.25,
+            fill: true,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            zoom: {
+              zoom: {
+                wheel: { enabled: true },
+                pinch: { enabled: true },
+                mode: "x"
+              },
+              pan: {
+                enabled: true,
+                mode: "x"
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: false,
+              ticks: { color: "#e4e8f0" },
+              grid: { color: "rgba(255,255,255,0.1)" }
+            },
+            x: {
+              ticks: { color: "#e4e8f0" },
+              grid: { color: "rgba(255,255,255,0.1)" }
+            }
+          }
+        },
+        plugins: [ovenLimitPlugin]
+      });
+    }
+
+    function updateOvenChart(temp) {
+      if (!ovenChart) return;
+      const now = Date.now();
+      if (now - lastOvenUpdate < 1000) return;
+      lastOvenUpdate = now;
+      const t = fmtTime(new Date());
+      ovenChart.data.labels.push(t);
+      ovenChart.data.datasets[0].data.push(temp);
+      if (ovenChart.data.labels.length > MAX_PTS) {
+        ovenChart.data.labels.shift();
+        ovenChart.data.datasets[0].data.shift();
+      }
+      const dataMin = Math.min(...ovenChart.data.datasets[0].data);
+      const dataMax = Math.max(...ovenChart.data.datasets[0].data);
+      const limitMin = (unit === 'F')
+        ? cToF(window.ovenLimits.min)
+        : window.ovenLimits.min;
+      const limitMax = (unit === 'F')
+        ? cToF(window.ovenLimits.max)
+        : window.ovenLimits.max;
+      const finalMin = Math.min(dataMin, limitMin) - 5;
+      const finalMax = Math.max(dataMax, limitMax) + 5;
+      ovenChart.options.scales.y.min = finalMin;
+      ovenChart.options.scales.y.max = finalMax;
+      ovenChart.update();
+    }
+
+    function setupOvenLimits() {
+      const presetSel = document.getElementById("ovenPreset");
+      const minInput = document.getElementById("ovenMin");
+      const maxInput = document.getElementById("ovenMax");
+      const btnApply = document.getElementById("applyOvenLimits");
+      const spInput = document.getElementById("ovenSetpoint");
+      const btnSet = document.getElementById("applyOvenSetpoint");
+
+      presetSel.onchange = () => {
+        const p = presetSel.value;
+        if (p !== "custom") {
+          minInput.value = getPresetValue(ovenPresets[p].min);
+          maxInput.value = getPresetValue(ovenPresets[p].max);
+          window.ovenLimits.min = ovenPresets[p].min;
+          window.ovenLimits.max = ovenPresets[p].max;
+          if (mqttClient) {
+            mqttClient.publish("cesar/esp32/oven/min", String(window.ovenLimits.min));
+            mqttClient.publish("cesar/esp32/oven/max", String(window.ovenLimits.max));
+          }
+          ovenChart.update();
+        }
+      };
+
+      btnApply.onclick = () => {
+        const rawMin = parseFloat(minInput.value);
+        const rawMax = parseFloat(maxInput.value);
+        if (isNaN(rawMin) || isNaN(rawMax)) return;
+        window.ovenLimits.min = (unit === 'F') ? fToC(rawMin) : rawMin;
+        window.ovenLimits.max = (unit === 'F') ? fToC(rawMax) : rawMax;
+        if (mqttClient) {
+          mqttClient.publish("cesar/esp32/oven/min", String(window.ovenLimits.min));
+          mqttClient.publish("cesar/esp32/oven/max", String(window.ovenLimits.max));
+        }
+        ovenChart.update();
+        addLog('🔥 Oven limits → '+rawMin+' - '+rawMax+'°'+unit,'success');
+      };
+
+      btnSet.onclick = () => {
+        const raw = parseFloat(spInput.value);
+        if (isNaN(raw)) return;
+        const spC = (unit === 'F') ? fToC(raw) : raw;
+        window.ovenSetpoint = spC;
+        if (mqttClient) {
+          mqttClient.publish("cesar/esp32/oven/set", String(spC));
+        }
+        addLog('🔥 Setpoint horno → '+raw.toFixed(1)+'°'+unit,'success');
+      };
+    }
+
+    function refreshOvenUI() {
+      const presetSel = document.getElementById("ovenPreset");
+      const minInput = document.getElementById("ovenMin");
+      const maxInput = document.getElementById("ovenMax");
+      const spInput  = document.getElementById("ovenSetpoint");
+      const p = presetSel.value;
+      if (p !== "custom") {
+        minInput.value = getPresetValue(ovenPresets[p].min);
+        maxInput.value = getPresetValue(ovenPresets[p].max);
+      } else {
+        minInput.value = (unit === 'F')
+          ? cToF(window.ovenLimits.min).toFixed(1)
+          : window.ovenLimits.min.toFixed(1);
+        maxInput.value = (unit === 'F')
+          ? cToF(window.ovenLimits.max).toFixed(1)
+          : window.ovenLimits.max.toFixed(1);
+      }
+      if (spInput) {
+        spInput.value = (unit === 'F')
+          ? cToF(window.ovenSetpoint).toFixed(1)
+          : window.ovenSetpoint.toFixed(1);
+      }
+    }
+
+    function refreshPresetList() {
+      const presetSel = document.getElementById("ovenPreset");
+      for (let key in ovenPresets) {
+        const opt = presetSel.querySelector(`option[value="${key}"]`);
+        if (!opt) continue;
+        const min = getPresetValue(ovenPresets[key].min);
+        const max = getPresetValue(ovenPresets[key].max);
+        opt.textContent = `${key.toUpperCase()} (${min}–${max}°${unit})`;
+      }
+    }
+
+    function setOvenModeUI(mode) {
+      const autoBtn = document.getElementById("autoModeBtn");
+      const manualBtn = document.getElementById("manualModeBtn");
+      if (mode === "auto") {
+        autoBtn.classList.add("active");
+        manualBtn.classList.remove("active");
+      } else {
+        manualBtn.classList.add("active");
+        autoBtn.classList.remove("active");
+      }
+    }
+
+    function playAlarmSound() {
+      const snd = document.getElementById("alarmSound");
+      snd.loop = true;
+      snd.volume = 1.0;
+      snd.play().catch(e => console.log("Autoplay bloqueado"));
+    }
+
+    function stopAlarmSound() {
+      const snd = document.getElementById("alarmSound");
+      snd.pause();
+      snd.currentTime = 0;
+    }
+
+    window.addEventListener('load', function() {
+      buildCards();
+      buildLimits();
+      initChart();
+      initOvenChart();
+      updSt();
+      setupOvenLimits();
+
+      // servo sliders
+      document.getElementById("servoInRange").addEventListener("input", function(e){
+        if (updatingServoIn) return;
+        if (mqttClient) mqttClient.publish("cesar/esp32/servoIn", e.target.value);
+        document.getElementById("servoInPosLabel").textContent = e.target.value + "°";
+      });
+
+      document.getElementById("servoOutRange").addEventListener("input", function(e){
+        if (updatingServoOut) return;
+        if (mqttClient) mqttClient.publish("cesar/esp32/servoOut", e.target.value);
+        document.getElementById("servoOutPosLabel").textContent = e.target.value + "°";
+      });
+
+      document.getElementById("autoModeBtn").onclick = function(){
+        if (mqttClient) mqttClient.publish("cesar/esp32/mode", "auto");
+        setOvenModeUI("auto");
+      };
+
+      document.getElementById("manualModeBtn").onclick = function(){
+        if (mqttClient) mqttClient.publish("cesar/esp32/mode", "manual");
+        setOvenModeUI("manual");
+      };
+
+      refreshOvenUI();
+      refreshPresetList();
+
+      // AUTO AJUSTES: obtener referencias
+      hystRange   = document.getElementById("hystRange");
+      inMinRange  = document.getElementById("inMinRange");
+      inMaxRange  = document.getElementById("inMaxRange");
+      outMinRange = document.getElementById("outMinRange");
+      outMaxRange = document.getElementById("outMaxRange");
+      stepRange   = document.getElementById("stepRange");
+      periodRange = document.getElementById("periodRange");
+
+      hystVal   = document.getElementById("hystVal");
+      inMinVal  = document.getElementById("inMinVal");
+      inMaxVal  = document.getElementById("inMaxVal");
+      outMinVal = document.getElementById("outMinVal");
+      outMaxVal = document.getElementById("outMaxVal");
+      stepVal   = document.getElementById("stepVal");
+      periodVal = document.getElementById("periodVal");
+
+      // sliders -> MQTT (en vivo)
+      hystRange.oninput = e => {
+        hystVal.innerText = e.target.value;
+        if (mqttClient) mqttClient.publish("cesar/esp32/auto/hyst", e.target.value);
+      };
+      inMinRange.oninput = e => {
+        inMinVal.innerText = e.target.value;
+        if (mqttClient) mqttClient.publish("cesar/esp32/auto/inMin", e.target.value);
+      };
+      inMaxRange.oninput = e => {
+        inMaxVal.innerText = e.target.value;
+        if (mqttClient) mqttClient.publish("cesar/esp32/auto/inMax", e.target.value);
+      };
+      outMinRange.oninput = e => {
+        outMinVal.innerText = e.target.value;
+        if (mqttClient) mqttClient.publish("cesar/esp32/auto/outMin", e.target.value);
+      };
+      outMaxRange.oninput = e => {
+        outMaxVal.innerText = e.target.value;
+        if (mqttClient) mqttClient.publish("cesar/esp32/auto/outMax", e.target.value);
+      };
+      stepRange.oninput = e => {
+        stepVal.innerText = e.target.value;
+        if (mqttClient) mqttClient.publish("cesar/esp32/auto/step", e.target.value);
+      };
+      periodRange.oninput = e => {
+        periodVal.innerText = e.target.value;
+        if (mqttClient) mqttClient.publish("cesar/esp32/auto/period", e.target.value);
+      };
+
+      // botón aplicar (reenvía todos)
+      const applyAutoSettings = document.getElementById("applyAutoSettings");
+      applyAutoSettings.onclick = () => {
+        if (!mqttClient) return;
+        mqttClient.publish("cesar/esp32/auto/hyst",   hystRange.value);
+        mqttClient.publish("cesar/esp32/auto/inMin",  inMinRange.value);
+        mqttClient.publish("cesar/esp32/auto/inMax",  inMaxRange.value);
+        mqttClient.publish("cesar/esp32/auto/outMin", outMinRange.value);
+        mqttClient.publish("cesar/esp32/auto/outMax", outMaxRange.value);
+        mqttClient.publish("cesar/esp32/auto/step",   stepRange.value);
+        mqttClient.publish("cesar/esp32/auto/period", periodRange.value);
+        addLog("🤖 Ajustes automáticos enviados al ESP32","success");
+      };
+    });
+  </script>
 
 </body>
 </html>
