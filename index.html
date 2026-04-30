@@ -12,262 +12,741 @@
 <body>
 
   <!-- Aquí va tu contenido del dashboard -->
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#0a0e17">
-  <title>Cesar's BBQ — Mobile</title>
-  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <title>Cesar's BBQ Dashboard v4.1</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+
   <style>
-    :root {
-      --bg:#0a0e17;--card:#323744;--border:#1e2a3a;--accent:#00d4ff;
-      --text:#e4e8f0;--muted:#7c8594;--success:#00e676;--warning:#ffab40;--danger:#ff5252;
-      --s1:#00d4ff;--s2:#00e676;--s3:#ffab40;--s4:#ff5252;
+    :root{
+      --bg:#050814;
+      --card:#0b1220;
+      --accent:#00d4ff;
+      --accent2:#ff9800;
+      --danger:#ff5252;
+      --ok:#00e676;
+      --muted:#7c8594;
     }
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);
-      min-height:100vh;-webkit-tap-highlight-color:transparent;overflow-x:hidden;}
-
-    /* HERO */
-    .hero{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);padding:16px 16px 12px;
-      text-align:center;border-bottom:2px solid #e94560;position:relative;}
-    .hero h1{font-size:2rem;font-weight:800;letter-spacing:1px;text-shadow:0 2px 12px rgba(233,69,96,0.3);}
-    .hero h1 .r{color:#e94560;} .hero h1 .w{color:#f5f5f5;}
-    .hero p{font-size:0.65rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
-
-    /* STATUS BAR */
-    .status-bar{display:flex;justify-content:space-between;align-items:center;
-      padding:8px 16px;background:var(--card);border-bottom:1px solid var(--border);font-size:0.72rem;flex-wrap:wrap;gap:6px;}
-    .status-item{display:flex;align-items:center;gap:5px;color:var(--muted);}
-    .status-item strong{color:var(--text);}
-    .dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
-    .dot.on{background:var(--success);box-shadow:0 0 6px var(--success);animation:pulse 2s infinite;}
-    .dot.off{background:var(--danger);}
-    @keyframes pulse{50%{opacity:0.5;}}
-
-    /* TABS */
-    .tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;}
-    .tab{flex:1;min-width:0;padding:10px 6px;text-align:center;font-size:0.72rem;font-weight:600;
-      color:var(--muted);border:none;background:none;cursor:pointer;transition:all 0.2s;white-space:nowrap;
-      border-bottom:2px solid transparent;}
-    .tab.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(0,212,255,0.05);}
-    .tab-icon{font-size:1rem;display:block;margin-bottom:2px;}
-
-    /* PANELS */
-    .panel{display:none;padding:12px;animation:fadeIn 0.3s;}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:radial-gradient(circle at top,#111827 0,#020617 45%,#000 100%);
+      color:#e4e8f0;
+      -webkit-font-smoothing:antialiased;
+    }
+    .hero{
+      text-align:center;
+      padding:16px 10px 8px;
+      background:linear-gradient(135deg,#111827,#020617);
+      border-bottom:1px solid rgba(148,163,184,0.2);
+      box-shadow:0 8px 20px rgba(15,23,42,0.9);
+      position:sticky;
+      top:0;
+      z-index:20;
+    }
+    .hero h1{
+      margin:0;
+      font-size:1.4rem;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+    }
+    .hero .r{color:#ff5252;}
+    .hero .w{color:#e4e8f0;}
+    .hero p{
+      margin:4px 0 0;
+      font-size:0.75rem;
+      color:#9ca3af;
+    }
+    .status-bar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      padding:6px 10px;
+      font-size:0.7rem;
+      background:#020617;
+      border-bottom:1px solid rgba(148,163,184,0.15);
+      position:sticky;
+      top:64px;
+      z-index:19;
+    }
+    .status-item{display:flex;align-items:center;gap:4px;color:#9ca3af;}
+    .dot{
+      width:8px;height:8px;border-radius:50%;
+      background:#4b5563;
+      box-shadow:0 0 0 1px rgba(15,23,42,0.8);
+    }
+    .dot.on{background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,0.8);}
+    .dot.off{background:#4b5563;}
+    .tabs{
+      display:flex;
+      overflow-x:auto;
+      background:#020617;
+      border-bottom:1px solid rgba(148,163,184,0.2);
+      position:sticky;
+      top:96px;
+      z-index:18;
+    }
+    .tab{
+      flex:1;
+      padding:8px 4px;
+      font-size:0.7rem;
+      border:none;
+      background:transparent;
+      color:#9ca3af;
+      cursor:pointer;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:2px;
+      border-bottom:2px solid transparent;
+      white-space:nowrap;
+    }
+    .tab-icon{font-size:1rem;}
+    .tab.active{
+      color:#e4e8f0;
+      border-bottom-color:var(--accent2);
+      background:radial-gradient(circle at top,rgba(248,250,252,0.06),transparent 55%);
+    }
+    .panel{
+      display:none;
+      padding:10px;
+    }
     .panel.active{display:block;}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-
-    /* SENSOR CARDS */
-    .sensors-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-    .sensor-card{background:var(--card);border:1px solid var(--border);border-radius:15px;
-      padding:14px 10px;text-align:center;position:relative;overflow:hidden;}
-    .sensor-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
-    .sensor-card:nth-child(1)::before{background:var(--s1);}
-    .sensor-card:nth-child(2)::before{background:var(--s2);}
-    .sensor-card:nth-child(3)::before{background:var(--s3);}
-    .sensor-card:nth-child(4)::before{background:var(--s4);}
-    .s-label{font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;}
-    .s-value{font-size:2.8rem;font-weight:700;line-height:1;}
-    .sensor-card:nth-child(1) .s-value{color:var(--s1);}
-    .sensor-card:nth-child(2) .s-value{color:var(--s2);}
-    .sensor-card:nth-child(3) .s-value{color:var(--s3);}
-    .sensor-card:nth-child(4) .s-value{color:var(--s4);}
-    .s-unit{font-size:1.5rem;color:var(--muted);margin:2px 0 6px;}
-    .s-alarm{font-size:1.62rem;font-weight:600;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:6px;}
-    .a-ok{background:rgba(0,230,118,0.1);color:var(--success);}
-    .a-warn{background:rgba(255,171,64,0.15);color:var(--warning);animation:blink 1s infinite;}
-    .a-danger{background:rgba(255,82,82,0.15);color:var(--danger);animation:blink 0.5s infinite;}
-    @keyframes blink{50%{opacity:0.5;}}
-    .s-protein{font-size:0.6rem;color:var(--accent);background:rgba(0,212,255,0.1);
-      padding:2px 6px;border-radius:8px;border:1px solid rgba(0,212,255,0.2);display:inline-block;margin-bottom:4px;}
+    .sensors-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      padding-top:6px;
+    }
+    .sensor-card{
+      background:radial-gradient(circle at top left,#111827 0,#020617 55%);
+      border-radius:12px;
+      padding:10px;
+      border:1px solid rgba(148,163,184,0.25);
+      box-shadow:0 10px 25px rgba(15,23,42,0.9);
+      position:relative;
+      overflow:hidden;
+    }
+    .s-label{
+      font-size:0.7rem;
+      color:#9ca3af;
+      margin-bottom:4px;
+      letter-spacing:0.06em;
+      text-transform:uppercase;
+    }
+    .s-value{
+      font-size:1.4rem;
+      font-weight:600;
+      color:#e5e7eb;
+    }
+    .s-unit{
+      font-size:0.7rem;
+      color:#9ca3af;
+      margin-bottom:4px;
+    }
+    .s-alarm{
+      font-size:0.65rem;
+      padding:2px 6px;
+      border-radius:999px;
+      display:inline-block;
+      margin-top:2px;
+    }
+    .a-ok{background:rgba(34,197,94,0.12);color:#bbf7d0;}
+    .a-warn{background:rgba(234,179,8,0.12);color:#facc15;}
+    .a-danger{background:rgba(248,113,113,0.12);color:#fecaca;}
+    .s-protein{
+      font-size:0.65rem;
+      color:#e5e7eb;
+      margin-top:4px;
+    }
     .s-protein.hidden{display:none;}
-    .s-limits{font-size:1.00rem;color:var(--muted);margin-bottom:4px;}
-    .s-limits strong{color:var(--text);}
-    .s-bar{height:25px;background:var(--bg);border-radius:2px;overflow:hidden;margin-bottom:6px;}
-    .s-bar-fill{height:100%;border-radius:2px;transition:width 0.5s;width:0%;}
-    .sensor-card:nth-child(1) .s-bar-fill{background:var(--s1);}
-    .sensor-card:nth-child(2) .s-bar-fill{background:var(--s2);}
-    .sensor-card:nth-child(3) .s-bar-fill{background:var(--s3);}
-    .sensor-card:nth-child(4) .s-bar-fill{background:var(--s4);}
-    .s-minmax{display:flex;justify-content:space-between;font-size:0.78rem;color:var(--muted);}
-    .s-minmax .mn{color:#4fc3f7;} .s-minmax .mx{color:#ff8a80;}
-
-    /* CONNECT PANEL */
-    .conn-section{background:var(--card);border:1px solid var(--border);border-radius:12px;
-      padding:14px;margin-bottom:12px;}
-    .conn-section h3{font-size:0.82rem;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
-    .conn-field{margin-bottom:10px;}
-    .conn-field label{display:block;font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
-    .conn-field input{width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);
-      border-radius:8px;color:var(--text);font-size:0.85rem;outline:none;}
-    .conn-field input:focus{border-color:var(--accent);}
-    .btn{width:100%;padding:12px;border:none;border-radius:10px;font-size:0.9rem;font-weight:600;
-      cursor:pointer;transition:all 0.2s;margin-top:6px;}
-    .btn-ble{background:linear-gradient(135deg,#1e88e5,#1565c0);color:white;}
-    .btn-ble:hover{background:linear-gradient(135deg,#42a5f5,#1e88e5);}
-    .btn-ble:disabled{opacity:0.4;cursor:not-allowed;}
-    .btn-mqtt{background:var(--accent);color:#0a0e17;}
-    .btn-mqtt:hover{background:#33ddff;}
-    .btn-disconnect{background:var(--danger);color:white;}
-    .btn-small{padding:8px 14px;font-size:0.75rem;width:auto;margin:0;background:var(--bg);
-      color:var(--muted);border:1px solid var(--border);border-radius:8px;cursor:pointer;}
-    .btn-small:hover{color:var(--text);border-color:var(--accent);}
-    .ble-note{font-size:0.65rem;color:var(--muted);margin-top:8px;line-height:1.5;
-      background:rgba(30,136,229,0.08);padding:8px;border-radius:8px;border-left:3px solid #1e88e5;}
-
-    /* SETTINGS */
-    .setting-group{background:var(--card);border:1px solid var(--border);border-radius:12px;
-      padding:14px;margin-bottom:12px;}
-    .setting-group h3{font-size:0.82rem;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
-    .protein-select{width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);
-      border-radius:8px;color:var(--text);font-size:0.85rem;outline:none;}
-    .protein-info{margin-top:8px;font-size:0.68rem;color:var(--muted);background:rgba(0,212,255,0.05);
-      padding:8px;border-radius:6px;border-left:3px solid var(--accent);line-height:1.4;}
-    .limit-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
-    .limit-row label{width:55px;font-size:0.68rem;color:var(--muted);}
-    .limit-input{width:60px;padding:7px;background:var(--bg);border:1px solid var(--border);
-      border-radius:6px;color:var(--text);font-size:0.8rem;text-align:center;outline:none;}
-    .limit-input:focus{border-color:var(--accent);}
-    .btn-apply-sensor{padding:5px 10px;background:rgba(0,212,255,0.15);color:var(--accent);
-      border:1px solid rgba(0,212,255,0.3);border-radius:6px;font-size:0.65rem;font-weight:600;cursor:pointer;}
-    .btn-apply-sensor:hover{background:var(--accent);color:#0a0e17;}
-    .protein-tag{font-size:0.58rem;color:var(--accent);background:rgba(0,212,255,0.1);
-      padding:1px 6px;border-radius:8px;border:1px solid rgba(0,212,255,0.2);}
-
-    .unit-toggle{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:8px 0;}
-    .unit-btn{flex:1;padding:10px;background:var(--bg);color:var(--muted);border:none;
-      font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
-    .unit-btn.active{background:var(--accent);color:#0a0e17;}
-
-    /* CHART */
-    .chart-container{position:relative;height:220px;background:var(--card);border:1px solid var(--border);
-      border-radius:12px;padding:10px;margin-bottom:12px;}
-    .chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-    .chart-header h3{font-size:0.82rem;color:var(--accent);}
-
-    /* LOG */
-    .log-container{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;}
-    .log-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-    .log-header h3{font-size:0.82rem;color:var(--accent);}
-    .log-list{max-height:200px;overflow-y:auto;font-family:'Cascadia Code','Consolas',monospace;
-      font-size:0.68rem;color:var(--muted);scrollbar-width:thin;}
-    .log-list div{padding:3px 0;border-bottom:1px solid rgba(30,42,58,0.3);}
-    .log-time{color:var(--accent);}
-    .log-success{color:var(--success);}
-    .log-error{color:var(--danger);}
-    .log-warn{color:var(--warning);}
-
-    /* BLE TERMINAL */
-    .ble-terminal{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:12px;}
-    .ble-terminal h3{font-size:0.82rem;color:#1e88e5;margin-bottom:8px;}
-    .ble-output{max-height:150px;overflow-y:auto;font-family:monospace;font-size:0.68rem;color:var(--muted);
-      background:var(--bg);border-radius:8px;padding:8px;margin-bottom:8px;scrollbar-width:thin;}
-    .ble-output div{padding:2px 0;}
-    .ble-input-row{display:flex;gap:6px;}
-    .ble-input{flex:1;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;
-      color:var(--text);font-size:0.82rem;outline:none;font-family:monospace;}
-    .ble-input:focus{border-color:#1e88e5;}
-    .btn-send{padding:10px 16px;background:#1e88e5;color:white;border:none;border-radius:8px;
-      font-weight:600;cursor:pointer;}
-    .ble-quick{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;}
-    .ble-quick button{padding:6px 10px;background:var(--bg);color:var(--muted);border:1px solid var(--border);
-      border-radius:6px;font-size:0.65rem;cursor:pointer;}
-    .ble-quick button:hover{color:#1e88e5;border-color:#1e88e5;}
-
-    /* WIFI PROVISIONING */
-    .wifi-section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;}
-    .wifi-section h3{font-size:0.82rem;color:#ff9800;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
-    .wifi-row{display:flex;gap:6px;margin-bottom:8px;}
-    .wifi-row .btn-wifi{flex:1;padding:10px;border:none;border-radius:8px;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
-    .btn-wifi-connect{background:linear-gradient(135deg,#ff9800,#e65100);color:white;}
-    .btn-wifi-connect:hover{background:linear-gradient(135deg,#ffa726,#ff9800);}
-    .btn-wifi-connect:disabled{opacity:0.4;cursor:not-allowed;}
-    .btn-wifi-scan{background:rgba(255,152,0,0.15);color:#ff9800;border:1px solid rgba(255,152,0,0.3);}
-    .btn-wifi-scan:hover{background:rgba(255,152,0,0.3);}
-    .btn-wifi-status{background:rgba(0,212,255,0.15);color:var(--accent);border:1px solid rgba(0,212,255,0.3);}
-    .btn-wifi-clear{background:rgba(255,82,82,0.15);color:var(--danger);border:1px solid rgba(255,82,82,0.3);}
-    .wifi-scan-results{max-height:160px;overflow-y:auto;background:var(--bg);border-radius:8px;padding:8px;margin-top:8px;display:none;scrollbar-width:thin;}
-    .wifi-scan-results h4{font-size:0.7rem;color:#ff9800;margin-bottom:6px;}
-    .wifi-net{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid var(--border);font-size:0.72rem;cursor:pointer;border-radius:6px;transition:background 0.2s;}
-    .wifi-net:hover{background:rgba(255,152,0,0.1);}
-    .wifi-net:last-child{border-bottom:none;}
-    .wifi-net-name{color:var(--text);font-weight:600;}
-    .wifi-net-rssi{color:var(--muted);font-size:0.62rem;}
-    .wifi-net-lock{font-size:0.72rem;}
-    .wifi-status-box{background:var(--bg);border-radius:8px;padding:10px;margin-top:8px;font-size:0.7rem;color:var(--muted);display:none;line-height:1.6;}
-    .wifi-status-box strong{color:var(--text);}
-    .wifi-status-box .ws-ok{color:var(--success);}
-    .wifi-status-box .ws-fail{color:var(--danger);}
-    .psw-toggle{position:relative;}
-    .psw-toggle input{padding-right:40px;}
-    .psw-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;}
-
-    .footer{text-align:center;padding:14px;font-size:0.6rem;color:var(--muted);}
-
-    @media(min-width:500px){
-      .sensors-grid{grid-template-columns:repeat(4,1fr);}
-      .s-value{font-size:2.6rem;}
+    .s-limits{
+      font-size:0.65rem;
+      color:#9ca3af;
+      margin-top:4px;
+    }
+    .s-bar{
+      width:100%;
+      height:4px;
+      border-radius:999px;
+      background:#020617;
+      margin-top:6px;
+      overflow:hidden;
+      border:1px solid rgba(31,41,55,0.9);
+    }
+    .s-bar-fill{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg,#22c55e,#eab308,#ef4444);
+      transition:width 0.25s ease-out;
+    }
+    .s-minmax{
+      display:flex;
+      justify-content:space-between;
+      font-size:0.6rem;
+      color:#6b7280;
+      margin-top:4px;
+    }
+    .s-minmax span span{margin-left:2px;color:#e5e7eb;}
+    .conn-section{
+      background:radial-gradient(circle at top left,#111827 0,#020617 55%);
+      border-radius:12px;
+      padding:10px;
+      border:1px solid rgba(148,163,184,0.25);
+      margin-bottom:10px;
+      box-shadow:0 10px 25px rgba(15,23,42,0.9);
+    }
+    .conn-section h3{
+      margin:0 0 6px;
+      font-size:0.9rem;
+      color:#e5e7eb;
+    }
+    .conn-field{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      margin-bottom:8px;
+      font-size:0.75rem;
+    }
+    .conn-field label{color:#9ca3af;}
+    .conn-field input{
+      padding:6px 8px;
+      border-radius:8px;
+      border:1px solid rgba(148,163,184,0.4);
+      background:#020617;
+      color:#e5e7eb;
+      font-size:0.8rem;
+    }
+    .btn{
+      border:none;
+      border-radius:999px;
+      padding:8px 14px;
+      font-size:0.8rem;
+      cursor:pointer;
+      color:#0b1120;
+      font-weight:600;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      box-shadow:0 10px 25px rgba(15,23,42,0.9);
+    }
+    .btn-mqtt{background:linear-gradient(135deg,#22c55e,#16a34a);}
+    .btn-ble{background:linear-gradient(135deg,#0ea5e9,#22c55e);}
+    .btn-disconnect{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fee2e2;}
+    .btn-small{
+      border:none;
+      border-radius:999px;
+      padding:4px 10px;
+      font-size:0.7rem;
+      cursor:pointer;
+      background:#111827;
+      color:#e5e7eb;
+      border:1px solid rgba(148,163,184,0.4);
+    }
+    .setting-group{
+      background:radial-gradient(circle at top left,#111827 0,#020617 55%);
+      border-radius:12px;
+      padding:10px;
+      border:1px solid rgba(148,163,184,0.25);
+      margin-bottom:10px;
+      box-shadow:0 10px 25px rgba(15,23,42,0.9);
+    }
+    .setting-group h3{
+      margin:0 0 6px;
+      font-size:0.9rem;
+      color:#e5e7eb;
+    }
+    .unit-toggle{
+      display:flex;
+      gap:6px;
+    }
+    .unit-btn{
+      flex:1;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,0.4);
+      background:#020617;
+      color:#9ca3af;
+      padding:6px 8px;
+      font-size:0.75rem;
+      cursor:pointer;
+    }
+    .unit-btn.active{
+      background:linear-gradient(135deg,#22c55e,#16a34a);
+      color:#0b1120;
+      border-color:transparent;
+    }
+    .protein-select{
+      width:100%;
+      padding:6px 8px;
+      border-radius:8px;
+      border:1px solid rgba(148,163,184,0.4);
+      background:#020617;
+      color:#e5e7eb;
+      font-size:0.8rem;
+    }
+    .protein-info{
+      margin-top:6px;
+      font-size:0.7rem;
+      color:#9ca3af;
+    }
+    .limit-row{
+      display:flex;
+      align-items:center;
+      gap:4px;
+      margin-bottom:6px;
+      font-size:0.7rem;
+    }
+    .limit-input{
+      width:60px;
+      padding:4px 6px;
+      border-radius:6px;
+      border:1px solid rgba(148,163,184,0.4);
+      background:#020617;
+      color:#e5e7eb;
+      font-size:0.75rem;
+    }
+    .btn-apply-sensor{
+      border:none;
+      border-radius:999px;
+      padding:4px 8px;
+      font-size:0.7rem;
+      cursor:pointer;
+      background:#111827;
+      color:#e5e7eb;
+      border:1px solid rgba(148,163,184,0.4);
+    }
+    .protein-tag{
+      font-size:0.65rem;
+      color:#e5e7eb;
+      padding:2px 6px;
+      border-radius:999px;
+      background:rgba(148,163,184,0.15);
+    }
+    .chart-container{
+      background:radial-gradient(circle at top left,#111827 0,#020617 55%);
+      border-radius:12px;
+      padding:10px;
+      border:1px solid rgba(148,163,184,0.25);
+      box-shadow:0 10px 25px rgba(15,23,42,0.9);
+      height:320px;
+      display:flex;
+      flex-direction:column;
+    }
+    .chart-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:4px;
+    }
+    .chart-header h3{
+      margin:0;
+      font-size:0.9rem;
+    }
+    .chart-container canvas{
+      flex:1;
+    }
+    .log-container{
+      background:radial-gradient(circle at top left,#111827 0,#020617 55%);
+      border-radius:12px;
+      padding:10px;
+      border:1px solid rgba(148,163,184,0.25);
+      box-shadow:0 10px 25px rgba(15,23,42,0.9);
+      height:320px;
+      display:flex;
+      flex-direction:column;
+    }
+    .log-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:4px;
+    }
+    .log-header h3{
+      margin:0;
+      font-size:0.9rem;
+    }
+    .log-list{
+      flex:1;
+      overflow-y:auto;
+      font-size:0.7rem;
+      padding-right:4px;
+    }
+    .log-time{
+      color:#6b7280;
+      margin-right:4px;
+    }
+    .log-success{color:#bbf7d0;}
+    .log-error{color:#fecaca;}
+    .log-warn{color:#fde68a;}
+    .footer{
+      text-align:center;
+      padding:10px;
+      font-size:0.7rem;
+      color:#6b7280;
+      border-top:1px solid rgba(31,41,55,0.9);
+      margin-top:10px;
+    }
+    .ble-note{
+      font-size:0.7rem;
+      color:#fbbf24;
+      background:rgba(251,191,36,0.08);
+      border-left:3px solid #fbbf24;
+      padding:6px 8px;
+      border-radius:6px;
+      margin-top:6px;
+    }
+    .ble-terminal{
+      margin-top:10px;
+      background:#020617;
+      border-radius:10px;
+      border:1px solid rgba(148,163,184,0.35);
+      padding:8px;
+    }
+    .ble-output{
+      height:120px;
+      overflow-y:auto;
+      font-size:0.7rem;
+      background:#020617;
+      border-radius:6px;
+      border:1px solid rgba(31,41,55,0.9);
+      padding:4px 6px;
+      margin-bottom:6px;
+    }
+    .ble-input-row{
+      display:flex;
+      gap:4px;
+      margin-bottom:4px;
+    }
+    .ble-input{
+      flex:1;
+      padding:6px 8px;
+      border-radius:8px;
+      border:1px solid rgba(148,163,184,0.4);
+      background:#020617;
+      color:#e5e7eb;
+      font-size:0.8rem;
+    }
+    .btn-send{
+      border:none;
+      border-radius:999px;
+      padding:0 12px;
+      font-size:0.9rem;
+      cursor:pointer;
+      background:linear-gradient(135deg,#22c55e,#16a34a);
+      color:#0b1120;
+      font-weight:600;
+    }
+    .ble-quick{
+      display:flex;
+      flex-wrap:wrap;
+      gap:4px;
+      margin-top:4px;
+    }
+    .ble-quick button{
+      border:none;
+      border-radius:999px;
+      padding:3px 8px;
+      font-size:0.65rem;
+      cursor:pointer;
+      background:#111827;
+      color:#e5e7eb;
+      border:1px solid rgba(148,163,184,0.4);
+    }
+    .wifi-section{
+      margin-top:10px;
+    }
+    .wifi-row{
+      display:flex;
+      gap:6px;
+      margin-bottom:6px;
+    }
+    .btn-wifi{
+      flex:1;
+      border:none;
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:0.75rem;
+      cursor:pointer;
+      background:#111827;
+      color:#e5e7eb;
+      border:1px solid rgba(148,163,184,0.4);
+    }
+    .btn-wifi-connect{background:linear-gradient(135deg,#22c55e,#16a34a);color:#0b1120;border:none;}
+    .btn-wifi-scan{background:#111827;}
+    .btn-wifi-status{background:#111827;}
+    .btn-wifi-clear{background:#111827;}
+    .wifi-scan-results,.wifi-status-box{
+      margin-top:6px;
+      font-size:0.7rem;
+      color:#e5e7eb;
+      display:none;
+    }
+    .wifi-net{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:4px 6px;
+      border-radius:6px;
+      border:1px solid rgba(31,41,55,0.9);
+      margin-bottom:4px;
+      cursor:pointer;
+      background:#020617;
+    }
+    .wifi-net-name{font-weight:500;}
+    .wifi-net-rssi{font-size:0.65rem;color:#9ca3af;}
+    .wifi-net-lock{margin-right:4px;}
+    .ws-ok{color:#bbf7d0;}
+    .ws-fail{color:#fecaca;}
+    .psw-toggle{
+      position:relative;
+    }
+    .psw-eye{
+      position:absolute;
+      right:6px;
+      top:50%;
+      transform:translateY(-50%);
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      font-size:0.8rem;
+    }
+    #muteAlarmBtn{
+      position:fixed;
+      right:10px;
+      bottom:10px;
+      z-index:30;
+    }
+    #globalAlarm{
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      padding:6px 10px;
+      font-size:0.75rem;
+      background:linear-gradient(90deg,#b91c1c,#ef4444);
+      color:#fee2e2;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      z-index:50;
+      box-shadow:0 4px 12px rgba(0,0,0,0.6);
+    }
+    #globalAlarm.hidden{display:none;}
+    .oven-container{
+      background:radial-gradient(circle at top left,#111827 0,#020617 55%);
+      border-radius:12px;
+      padding:10px;
+      border:1px solid rgba(148,163,184,0.25);
+      box-shadow:0 10px 25px rgba(15,23,42,0.9);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .oven-header h2{
+      margin:0;
+      font-size:1rem;
+    }
+    .sensor-box{
+      background:#020617;
+      border-radius:10px;
+      padding:8px;
+      border:1px solid rgba(31,41,55,0.9);
+    }
+    .sensor-box h3{
+      margin:0 0 4px;
+      font-size:0.85rem;
+    }
+    .temp-value{
+      font-size:1.4rem;
+      font-weight:600;
+      margin-bottom:4px;
+    }
+    .motor-controls{
+      background:#020617;
+      border-radius:10px;
+      padding:8px;
+      border:1px solid rgba(31,41,55,0.9);
+      font-size:0.8rem;
+    }
+    .motor-controls h3{
+      margin:6px 0;
+      font-size:0.85rem;
+    }
+    .motor-controls label{
+      display:block;
+      margin-top:4px;
+      font-size:0.75rem;
+      color:#9ca3af;
+    }
+    .motor-controls input[type=range]{
+      width:100%;
+    }
+    .mode-buttons{
+      display:flex;
+      gap:6px;
+      margin-top:8px;
+    }
+    .mode-buttons button{
+      flex:1;
+      border:none;
+      border-radius:999px;
+      padding:6px 8px;
+      font-size:0.75rem;
+      cursor:pointer;
+      background:#111827;
+      color:#e5e7eb;
+      border:1px solid rgba(148,163,184,0.4);
+    }
+    .oven-limits{
+      margin-bottom:8px;
+      font-size:0.75rem;
+    }
+    .oven-limits label{
+      display:block;
+      margin-top:4px;
+      color:#9ca3af;
+    }
+    .oven-limits input,.oven-limits select{
+      width:100%;
+      padding:4px 6px;
+      border-radius:6px;
+      border:1px solid rgba(148,163,184,0.4);
+      background:#020617;
+      color:#e5e7eb;
+      font-size:0.75rem;
+    }
+    .oven-limits button{
+      margin-top:6px;
+      width:100%;
+      border:none;
+      border-radius:999px;
+      padding:6px 8px;
+      font-size:0.75rem;
+      cursor:pointer;
+      background:linear-gradient(135deg,#f97316,#ea580c);
+      color:#0b1120;
+      font-weight:600;
+    }
+    .mode-buttons button.active {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #0b1120;
+      border-color: transparent;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(34,197,94,0.6);
+    }
+    .Auto-Adjust {
+      background: radial-gradient(circle at top left, #111827 0%, #020617 55%);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(148,163,184,0.25);
+      box-shadow: 0 10px 25px rgba(15,23,42,0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      color: #e5e7eb;
+    }
+    .setting-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .setting-block label {
+      font-size: 14px;
+      color: #9ca3af;
+    }
+    .setting-block input[type="range"] {
+      width: 100%;
+    }
+    .apply-btn {
+      margin-top: 10px;
+      padding: 10px;
+      background: #2563eb;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .apply-btn:hover {
+      background: rgb(34, 38, 148);
+      color: rgb(241, 242, 247);
+    }
+    .servo-group {
+      margin-bottom: 12px;
+    }
+    .servo-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+    #servoInPosLabel,
+    #servoOutPosLabel {
+      font-weight: 600;
     }
   </style>
 </head>
 <body>
 
-  <!-- HERO -->
   <div class="hero">
-    <h1>&#128293; <span class="r">Cesar's</span> <span class="w">BBQ</span> &#128293;</h1>
-    <p>Dashboard IoT Mobile</p>
+    <h1>🔥 <span class="r">Cesar's</span> <span class="w">BBQ</span> 🔥</h1>
+    <p>Dashboard IoT Mobile v4.1</p>
   </div>
 
-  <!-- STATUS BAR -->
   <div class="status-bar">
     <div class="status-item"><span class="dot off" id="dotMqtt"></span> MQTT: <strong id="mqttSt">Off</strong></div>
     <div class="status-item"><span class="dot off" id="dotBle"></span> BLE: <strong id="bleSt">Off</strong></div>
     <div class="status-item"><span class="dot off" id="dotWifi"></span> WiFi: <strong id="wifiSt">--</strong></div>
     <div class="status-item">TX: <strong id="msgCount">0</strong></div>
-    <div class="status-item">&#128337; <strong id="lastTime">--:--</strong></div>
+    <div class="status-item">🕓 <strong id="lastTime">--:--</strong></div>
   </div>
 
-  <!-- TABS -->
+  <div id="globalAlarm" class="hidden">
+    <span id="globalAlarmText"></span>
+  </div>
+
   <div class="tabs">
-    <button class="tab active" onclick="showTab('monitor')"><span class="tab-icon">&#127777;</span>Monitor</button>
-    <button class="tab" onclick="showTab('connect')"><span class="tab-icon">&#128268;</span>Conexion</button>
-    <button class="tab" onclick="showTab('settings')"><span class="tab-icon">&#9881;</span>Ajustes</button>
-    <button class="tab" onclick="showTab('chart')"><span class="tab-icon">&#128200;</span>Grafica</button>
-    <button class="tab" onclick="showTab('log')"><span class="tab-icon">&#128203;</span>Log</button>
+    <button class="tab active" onclick="showTab('monitor')"><span class="tab-icon">🌡️</span>Monitor</button>
+    <button class="tab" onclick="showTab('connect')"><span class="tab-icon">🔌</span>Conexion</button>
+    <button class="tab" onclick="showTab('settings')"><span class="tab-icon">⚙</span>Ajustes</button>
+    <button class="tab" onclick="showTab('chart')"><span class="tab-icon">📈</span>Grafica</button>
+    <button class="tab" onclick="showTab('log')"><span class="tab-icon">📃</span>Log</button>
+    <button class="tab" onclick="showTab('oven')"><span class="tab-icon">🍽️</span>OVEN</button>
+    <button class="tab" onclick="showTab('autoSettings')"><span class="tab-icon">🤖</span>Auto Ajustes</button>
   </div>
 
-  <!-- ════════ MONITOR TAB ════════ -->
+  <button id="muteAlarmBtn" class="btn-small">🔇 Silenciar</button>
+
+  <!-- MONITOR -->
   <div class="panel active" id="panelMonitor">
     <div class="sensors-grid" id="sensorsGrid"></div>
   </div>
 
-  <!-- ════════ CONNECT TAB ════════ -->
+  <!-- CONNECT -->
   <div class="panel" id="panelConnect">
 
-    <!-- BLE -->
     <div class="conn-section">
-      <h3>&#128309; Bluetooth Low Energy (BLE)</h3>
-      <button class="btn btn-ble" id="btnBle" onclick="toggleBLE()">&#128268; Conectar BLE</button>
+      <h3>🔹 Bluetooth Low Energy (BLE)</h3>
+      <button class="btn btn-ble" id="btnBle" onclick="toggleBLE()">🔗 Conectar BLE</button>
       <div class="ble-note">
         Conecta directamente al ESP32 sin WiFi mediante Bluetooth.<br>
-        Requiere <strong>Abrir en Chrome en Android</strong>. Nombre: <strong>CesarBBQ</strong>
+        Requiere <strong>Chrome en Android</strong>. Nombre: <strong>CesarBBQ</strong>
       </div>
     </div>
 
-    <!-- BLE Terminal -->
     <div class="ble-terminal" id="bleTerminal" style="display:none">
-      <h3>&#128309; Terminal BLE</h3>
+      <h3>🔹 Terminal BLE</h3>
       <div class="ble-output" id="bleOutput"></div>
       <div class="ble-input-row">
         <input class="ble-input" id="bleInput" placeholder="Comando..." onkeydown="if(event.key==='Enter')sendBLECmd()">
-        <button class="btn-send" onclick="sendBLECmd()">&#10148;</button>
+        <button class="btn-send" onclick="sendBLECmd()">➤</button>
       </div>
       <div class="ble-quick">
         <button onclick="sendBLEQuick('status')">status</button>
@@ -279,39 +758,37 @@
       </div>
     </div>
 
-    <!-- WIFI PROVISIONING -->
     <div class="wifi-section" id="wifiSection">
-      <h3>&#128246; WiFi Provisioning (via BLE)</h3>
+      <h3>📶 WiFi Provisioning (via BLE)</h3>
       <div class="conn-field">
         <label>SSID (Nombre de Red)</label>
         <input type="text" id="wifiSSID" placeholder="Nombre de tu red WiFi" autocomplete="off">
       </div>
       <div class="conn-field psw-toggle">
         <label>Password</label>
-        <input type="password" id="wifiPSW" placeholder="Contrase&#241;a WiFi" autocomplete="off">
-        <button class="psw-eye" onclick="togglePswVis()" type="button">&#128065;</button>
+        <input type="password" id="wifiPSW" placeholder="Contraseña WiFi" autocomplete="off">
+        <button class="psw-eye" onclick="togglePswVis()" type="button">👁️</button>
       </div>
       <div class="wifi-row">
-        <button class="btn-wifi btn-wifi-connect" id="btnWifiConnect" onclick="wifiConnect()" disabled>&#128268; Conectar WiFi</button>
+        <button class="btn-wifi btn-wifi-connect" id="btnWifiConnect" onclick="wifiConnect()" disabled>🔌 Conectar WiFi</button>
       </div>
       <div class="wifi-row">
-        <button class="btn-wifi btn-wifi-scan" onclick="wifiScan()" id="btnWifiScan" disabled>&#128270; Escanear Redes</button>
-        <button class="btn-wifi btn-wifi-status" onclick="wifiStatus()" id="btnWifiStatus" disabled>&#128220; Estado WiFi</button>
+        <button class="btn-wifi btn-wifi-scan" onclick="wifiScan()" id="btnWifiScan" disabled>🔍 Escanear Redes</button>
+        <button class="btn-wifi btn-wifi-status" onclick="wifiStatus()" id="btnWifiStatus" disabled>📄 Estado WiFi</button>
       </div>
       <div class="wifi-row">
-        <button class="btn-wifi btn-wifi-clear" onclick="wifiClear()" id="btnWifiClear" disabled>&#128465; Borrar Credenciales</button>
+        <button class="btn-wifi btn-wifi-clear" onclick="wifiClear()" id="btnWifiClear" disabled>🗑 Borrar Credenciales</button>
       </div>
       <div class="wifi-scan-results" id="wifiScanResults"></div>
       <div class="wifi-status-box" id="wifiStatusBox"></div>
       <div class="ble-note" style="border-left-color:#ff9800;background:rgba(255,152,0,0.08);margin-top:10px">
-        &#9888;&#65039; Requiere <strong>conexi&#243;n BLE activa</strong>. Primero conecta Bluetooth arriba.<br>
-        Las credenciales se guardan en la <strong>memoria flash</strong> del ESP32 y sobreviven reinicios.
+        ⚠️ Requiere <strong>conexión BLE activa</strong>. Primero conecta Bluetooth arriba.<br>
+        Las credenciales se guardan en la <strong>flash</strong> del ESP32.
       </div>
     </div>
 
-    <!-- MQTT -->
     <div class="conn-section">
-      <h3>&#128225; MQTT (WiFi/Internet)</h3>
+      <h3>📡 MQTT (WiFi/Internet)</h3>
       <div class="conn-field">
         <label>Broker</label>
         <input type="text" id="brokerUrl" value="wss://broker.hivemq.com:8884/mqtt">
@@ -324,68 +801,64 @@
     </div>
   </div>
 
-  <!-- ════════ SETTINGS TAB ════════ -->
+  <!-- SETTINGS -->
   <div class="panel" id="panelSettings">
 
-    <!-- Unit Toggle -->
     <div class="setting-group">
-      <h3>&#127777; Unidad de Temperatura</h3>
+      <h3>🌡️ Unidad de Temperatura</h3>
       <div class="unit-toggle">
-        <button class="unit-btn active" id="btnC" onclick="setUnit('C')">&#176;C Celsius</button>
-        <button class="unit-btn" id="btnF" onclick="setUnit('F')">&#176;F Fahrenheit</button>
+        <button class="unit-btn active" id="btnC" onclick="setUnit('C')">°C Celsius</button>
+        <button class="unit-btn" id="btnF" onclick="setUnit('F')">°F Fahrenheit</button>
       </div>
     </div>
 
-    <!-- Protein -->
     <div class="setting-group">
-      <h3>&#129385; Perfil de Proteina</h3>
+      <h3>🥩 Perfil de Proteina</h3>
       <select class="protein-select" id="proteinSel" onchange="onProteinChange()">
         <option value="custom">-- Personalizado --</option>
-        <option value="res_mr">Res (Medio Rojo) — 57-63 &#176;C — 134.6-145.4 &#176;F</option>
-        <option value="res_mp">Res (Medio) — 63-68 &#176;C — 145.4-154.4 &#176;F</option>
-        <option value="res_mw">Res (Medium-Well) — 66-71 &#176;C — 150.8-159.8 &#176;F</option>
-        <option value="res_bc">Res (Bien Cocida) — 71-77 &#176;C — 159.8-170.6 &#176;F</option>
-        <option value="pollo">Pollo — 74-85 &#176;C — 165.2-185.0 &#176;F</option>
-        <option value="cerdo">Cerdo — 63-74 &#176;C — 145.4-165.2 &#176;F</option>
-        <option value="pescado">Pescado — 63-68 &#176;C — 145.4-154.4 &#176;F</option>
-        <option value="marisco">Mariscos — 63-74 &#176;C — 145.4-165.2 &#176;F</option>
-        <option value="pan">Pan / Reposteria — 88-96 &#176;C — 190.4-204.8 &#176;F</option>
-        <option value="oven">&#127859; OVEN (Horno) — 150-260 &#176;C — 302.0-500.0 &#176;F</option>
+        <option value="res_mr">Res (Medio Rojo) — 57-63 °C — 134.6-145.4 °F</option>
+        <option value="res_mp">Res (Medio) — 63-68 °C — 145.4-154.4 °F</option>
+        <option value="res_mw">Res (Medium-Well) — 66-71 °C — 150.8-159.8 °F</option>
+        <option value="res_bc">Res (Bien Cocida) — 71-77 °C — 159.8-170.6 °F</option>
+        <option value="pollo">Pollo — 74-85 °C — 165.2-185.0 °F</option>
+        <option value="cerdo">Cerdo — 63-74 °C — 145.4-165.2 °F</option>
+        <option value="pescado">Pescado — 63-68 °C — 145.4-154.4 °F</option>
+        <option value="marisco">Mariscos — 63-74 °C — 145.4-165.2 °F</option>
+        <option value="pan">Pan / Reposteria — 88-96 °C — 190.4-204.8 °F</option>
+        <option value="oven">🍽 OVEN (Horno) — 150-260 °C — 302.0-500.0 °F</option>
       </select>
       <div class="protein-info" id="proteinInfo">Selecciona un perfil y aplica a cada zona.</div>
     </div>
 
-    <!-- Limits -->
     <div class="setting-group">
-      <h3>&#127777; Limites por Zona</h3>
+      <h3>🌡️ Limites por Zona</h3>
       <div id="limitsContainer"></div>
-      <button class="btn btn-mqtt" style="margin-top:10px" onclick="applyManualLimits()">&#10003; Aplicar Limites Manuales</button>
+      <button class="btn btn-mqtt" style="margin-top:10px" onclick="applyManualLimits()">✔ Aplicar Limites Manuales</button>
     </div>
 
-    <!-- Actions -->
     <div class="setting-group">
-      <h3>&#128190; Acciones</h3>
-      <button class="btn btn-mqtt" onclick="downloadCSV()">&#128190; Descargar CSV</button>
-      <button class="btn btn-small" style="width:100%;margin-top:8px" onclick="resetAll()">&#128260; Reset Min/Max y Grafica</button>
+      <h3>💾 Acciones</h3>
+      <button class="btn btn-mqtt" onclick="downloadCSV()">💾 Descargar CSV</button>
+      <button class="btn btn-small" style="width:100%;margin-top:8px" onclick="resetAll()">🔄 Reset Min/Max y Grafica</button>
     </div>
   </div>
 
-  <!-- ════════ CHART TAB ════════ -->
+  <!-- CHART -->
   <div class="panel" id="panelChart">
     <div class="chart-container">
       <div class="chart-header">
-        <h3>&#128200; Historial</h3>
+        <h3>📈 Historial</h3>
         <button class="btn-small" onclick="resetAll()">Limpiar</button>
       </div>
       <canvas id="tempChart"></canvas>
     </div>
   </div>
 
-  <!-- ════════ LOG TAB ════════ -->
+  <!-- LOG -->
   <div class="panel" id="panelLog">
     <div class="log-container">
       <div class="log-header">
-        <h3>&#128203; Log</h3>
+        <h3>📃 Log</h3>
         <button class="btn-small" onclick="clearLog()">Limpiar</button>
       </div>
       <div class="log-list" id="logList">
@@ -394,566 +867,1347 @@
     </div>
   </div>
 
-  <div class="footer">Cesar's BBQ — ESP32 + BLE — 2026</div>
+  <!-- OVEN -->
+  <div class="panel" id="panelOven">
+    <div class="oven-container">
 
-<script>
-// ═══════════════════ STATE ═══════════════════
-var MAX_PTS=60, SC=['#00d4ff','#00e676','#ffab40','#ff5252'],
-    SBG=['rgba(0,212,255,0.08)','rgba(0,230,118,0.08)','rgba(255,171,64,0.08)','rgba(255,82,82,0.08)'];
-var ZONES=['Zona A','Zona B','Zona C','Zona D'];
-var mqttClient=null,isMqtt=false,chart=null,totalMsg=0,unit='C';
-var sMin=[Infinity,Infinity,Infinity,Infinity], sMax=[-Infinity,-Infinity,-Infinity,-Infinity];
-var limits=[{min:10,max:60},{min:10,max:60},{min:10,max:60},{min:10,max:60}];
-var sensorProtein=[null,null,null,null], csvData=[];
+      <div class="oven-header">
+        <h2>Oven Control</h2>
+      </div>
+      <button id="clearOvenChart" class="btn-small">Limpiar gráfica</button>
 
-// BLE state
-var bleDevice=null, bleTx=null, bleRx=null, isBle=false, bleBuffer='';
-var NUS_SVC='6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-var NUS_RX='6e400002-b5a3-f393-e0a9-e50e24dcca9e';
-var NUS_TX='6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+      <div class="sensor-box">
+        <h3>Oven Temperature</h3>
+        <div id="oven-temp-display" class="temp-value">---</div>
+        <canvas id="ovenChart" width="300" height="150"></canvas>
+      </div>
 
-var profiles={
-  custom:null,
-  res_mr:{min:57,max:63,info:'Res Medio Rojo: 57-63 C. Centro rosado, jugosa.'},
-  res_mp:{min:63,max:68,info:'Res Medio: 63-68 C. Centro rosa palido.'},
-  res_mw:{min:66,max:71,info:'Res Medium-Well: 66-71 C. Ligeramente rosado, firme.'},
-  res_bc:{min:71,max:77,info:'Res Bien Cocida: 71-77 C. Sin rosado, firme.'},
-  pollo:{min:74,max:85,info:'Pollo: Min segura 74 C (USDA). Jugos claros.'},
-  cerdo:{min:63,max:74,info:'Cerdo: Min segura 63 C con reposo 3 min.'},
-  pescado:{min:63,max:68,info:'Pescado: 63 C. Carne opaca, se separa en hojuelas.'},
-  marisco:{min:63,max:74,info:'Mariscos: 63-74 C. Opacos y firmes.'},
-  pan:{min:88,max:96,info:'Pan/Reposteria: 88-96 C interna.'},
-  oven:{min:150,max:260,info:'OVEN: Temperatura ambiente del horno 150-260 C.'}
+      <div class="motor-controls">
+        <div class="oven-limits">
+          <h3>Oven Limits & Setpoint</h3>
+
+          <label>Preset:</label>
+          <select id="ovenPreset">
+            <option value="custom">-- Custom --</option>
+            <option value="smoke">Smoke (90–120°C)</option>
+            <option value="grill">Grill (180–250°C)</option>
+            <option value="roast">Roast (160–200°C)</option>
+            <option value="sear">Sear (250–300°C)</option>
+            <option value="pizza">Pizza Oven (300–450°C)</option>
+          </select>
+
+          <label>Min:</label>
+          <input type="number" id="ovenMin" value="150">
+
+          <label>Max:</label>
+          <input type="number" id="ovenMax" value="260">
+
+          <button id="applyOvenLimits">Apply Limits</button>
+
+          <label>Setpoint:</label>
+          <input type="number" id="ovenSetpoint" value="180">
+          <button id="applyOvenSetpoint">Apply Setpoint</button>
+        </div>
+
+        <div class="servo-group">
+          <div class="servo-header">
+            <span>Entrada de aire</span>
+            <span id="servoInPosLabel">90°</span>
+          </div>
+          <input type="range" id="servoInRange" min="0" max="90" value="90">
+        </div>
+
+        <div class="servo-group">
+          <div class="servo-header">
+            <span>Salida de aire</span>
+            <span id="servoOutPosLabel">90°</span>
+          </div>
+          <input type="range" id="servoOutRange" min="45" max="90" value="90">
+        </div>
+
+        <div class="mode-buttons">
+          <button id="autoModeBtn">Auto Mode</button>
+          <button id="manualModeBtn">Manual Mode</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVEN AUTO AJUSTES -->
+  <div class="panel" id="panelAutoSettings">
+    <div class="Auto-Adjust">
+      <h2>Ajustes Automáticos</h2><button id= "updatesettings" class="apply-btn">Leer Valores</button>
+
+      <div class="setting-block">
+        <label>Histeresis (°C): <span id="hystVal">--</span></label>
+        <input type="range" id="hystRange" min="1" max="20" value="3">
+      </div>
+
+      <div class="setting-block">
+        <label>Entrada Min: <span id="inMinVal">--</span></label>
+        <input type="range" id="inMinRange" min="0" max="90" value="10">
+      </div>
+
+      <div class="setting-block">
+        <label>Entrada Max: <span id="inMaxVal">--</span></label>
+        <input type="range" id="inMaxRange" min="0" max="90" value="90">
+      </div>
+
+      <div class="setting-block">
+        <label>Salida Min: <span id="outMinVal">--</span></label>
+        <input type="range" id="outMinRange" min="45" max="90" value="45">
+      </div>
+
+      <div class="setting-block">
+        <label>Salida Max: <span id="outMaxVal">--</span></label>
+        <input type="range" id="outMaxRange" min="45" max="90" value="90">
+      </div>
+
+      <div class="setting-block">
+        <label>Paso del Servo: <span id="stepVal">--</span></label>
+        <input type="range" id="stepRange" min="1" max="20" value="20">
+      </div>
+
+      <div class="setting-block">
+        <label>Periodo Control (ms): <span id="periodVal">--</span></label>
+        <input type="range" id="periodRange" min="500" max="20000" value="5000" step="500">
+      </div>
+
+      <button id= "applyAutoSettings" class="apply-btn">Aplicar Ajustes</button>
+    </div>
+  </div>
+
+  <div class="footer">Cesar's BBQ — ESP32 + BLE — v4.1 — 2026</div>
+
+  <audio id="alarmSound">
+    <source src="alarm.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    document.getElementById("clearOvenChart").onclick = () => {
+      if (!window.ovenChart) return;
+      ovenChart.data.labels = [];
+      ovenChart.data.datasets[0].data = [];
+      ovenChart.update();
+    };
+
+    document.getElementById("muteAlarmBtn").onclick = () => {
+      stopAlarmSound();
+    };
+
+    let lastOvenTemp = null;
+
+    window.ovenLimits = { min: 150, max: 260 };
+    window.ovenSetpoint = 180;
+    const ovenPresets = {
+      smoke: { min: 90, max: 120 },
+      grill: { min: 180, max: 250 },
+      roast: { min: 160, max: 200 },
+      sear:  { min: 250, max: 300 },
+      pizza: { min: 300, max: 450 }
+    };
+
+    function getPresetValue(v) {
+      return unit === 'F' ? cToF(v) : v;
+    }
+
+    let lastOvenUpdate = 0;
+    let updatingServoIn = false;
+    let updatingServoOut = false;
+
+    var MAX_PTS=720, SC=['#00d4ff','#00e676','#ffab40','#ff5252'],
+        SBG=['rgba(0,212,255,0.08)','rgba(0,230,118,0.08)','rgba(255,171,64,0.08)','rgba(255,82,82,0.08)'];
+    var ZONES=['Zona A','Zona B','Zona C','Zona D'];
+    var mqttClient=null,isMqtt=false,chart=null,totalMsg=0,unit='C';
+    var sMin=[Infinity,Infinity,Infinity,Infinity], sMax=[-Infinity,-Infinity,-Infinity,-Infinity];
+    var limits=[{min:10,max:60},{min:10,max:60},{min:10,max:60},{min:10,max:60}];
+    var sensorProtein=[null,null,null,null], csvData=[];
+    var lastValues = [null, null, null, null];
+
+    var bleDevice=null, bleTx=null, bleRx=null, isBle=false, bleBuffer='';
+    var NUS_SVC='6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+    var NUS_RX='6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+    var NUS_TX='6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+
+    var profiles={
+      custom:null,
+      res_mr:{min:57,max:63,info:'Res Medio Rojo: 57-63 C. Centro rosado, jugosa.'},
+      res_mp:{min:63,max:68,info:'Res Medio: 63-68 C. Centro rosa palido.'},
+      res_mw:{min:66,max:71,info:'Res Medium-Well: 66-71 C. Ligeramente rosado, firme.'},
+      res_bc:{min:71,max:77,info:'Res Bien Cocida: 71-77 C. Sin rosado, firme.'},
+      pollo:{min:74,max:85,info:'Pollo: Min segura 74 C (USDA). Jugos claros.'},
+      cerdo:{min:63,max:74,info:'Cerdo: Min segura 63 C con reposo 3 min.'},
+      pescado:{min:63,max:68,info:'Pescado: 63 C. Carne opaca, se separa en hojuelas.'},
+      marisco:{min:63,max:74,info:'Mariscos: 63-74 C. Opacos y firmes.'},
+      pan:{min:88,max:96,info:'Pan/Reposteria: 88-96 C interna.'},
+      oven:{min:150,max:260,info:'OVEN: Temperatura ambiente del horno 150-260 C.'}
+    };
+
+    function cToF(c){return(c*9/5)+32;}
+    function fToC(f){return(f-32)*5/9;}
+    function dT(c){return unit==='F'?cToF(c).toFixed(1):c.toFixed(1);}
+    function uS(){return unit==='F'?'°F':'°C';}
+    function fmtTime(d){return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')+':'+d.getSeconds().toString().padStart(2,'0');}
+
+    function showTab(name){
+      var tabs = document.querySelectorAll('.tab'),
+          panels = document.querySelectorAll('.panel');
+
+      var map = {
+        monitor: 'panelMonitor',
+        connect: 'panelConnect',
+        settings: 'panelSettings',
+        chart: 'panelChart',
+        log: 'panelLog',
+        oven: 'panelOven',
+        autoSettings: 'panelAutoSettings'
+      };
+
+      var names = ['monitor','connect','settings','chart','log','oven','autoSettings'];
+
+      tabs.forEach(t => t.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+
+      var idx = names.indexOf(name);
+      if (idx >= 0) tabs[idx].classList.add('active');
+
+      document.getElementById(map[name]).classList.add('active');
+
+      if (name === 'chart' && chart) chart.resize();
+    }
+
+    function buildCards(){
+      var g=document.getElementById('sensorsGrid');
+      g.innerHTML='';
+      for(var i=0;i<4;i++){
+        g.innerHTML+=
+          '<div class="sensor-card">'+
+            '<div class="s-label">◆ '+ZONES[i]+'</div>'+
+            '<div class="s-value" id="v'+(i+1)+'">--.-</div>'+
+            '<div class="s-unit" id="u'+(i+1)+'">'+uS()+'</div>'+
+            '<div class="s-alarm a-ok" id="a'+(i+1)+'">--</div><br>'+
+            '<div class="s-protein hidden" id="sp'+(i+1)+'"></div>'+
+            '<div class="s-limits" id="sl'+(i+1)+'">Lim: <strong>'+dT(limits[i].min)+' — '+dT(limits[i].max)+'</strong> '+uS()+'</div>'+
+            '<div class="s-bar"><div class="s-bar-fill" id="b'+(i+1)+'"></div></div>'+
+            '<div class="s-minmax"><span>Min:<span class="mn" id="mn'+(i+1)+'">--</span></span><span>Max:<span class="mx" id="mx'+(i+1)+'">--</span></span></div>'+
+          '</div>';
+      }
+    }
+
+    function buildLimits(){
+      var c=document.getElementById('limitsContainer');
+      c.innerHTML='';
+      for(var i=0;i<4;i++){
+        var mn=unit==='F'?cToF(limits[i].min):limits[i].min;
+        var mx=unit==='F'?cToF(limits[i].max):limits[i].max;
+        c.innerHTML+=
+          '<div class="limit-row">'+
+            '<label>'+ZONES[i]+':</label>'+
+            '<span style="color:var(--muted);font-size:0.65rem">Min</span>'+
+            '<input type="number" class="limit-input" id="lm'+(i+1)+'" value="'+(Math.round(mn*10)/10)+'" step="0.5">'+
+            '<span style="color:var(--muted);font-size:0.65rem">Max</span>'+
+            '<input type="number" class="limit-input" id="lx'+(i+1)+'" value="'+(Math.round(mx*10)/10)+'" step="0.5">'+
+            '<span style="font-size:0.65rem;color:var(--muted)">'+uS()+'</span>'+
+            '<button class="btn-apply-sensor" onclick="applyProteinToSensor('+i+')">🥩</button>'+
+            '<span class="protein-tag" id="pt'+(i+1)+'" style="display:'+(sensorProtein[i]?'inline':'none')+'">'+
+              (sensorProtein[i]||'')+
+            '</span>'+
+          '</div>';
+      }
+    }
+
+    function setUnit(u){
+      unit=u;
+      document.getElementById('btnC').className='unit-btn'+(u==='C'?' active':'');
+      document.getElementById('btnF').className='unit-btn'+(u==='F'?' active':'');
+      buildLimits();
+      refreshCards();
+      updateChartUnit();
+      refreshOvenUI();
+      refreshPresetList();
+      addLog('🌡 Unidad: '+uS(),'warn');
+    }
+
+    function onProteinChange(){
+      var sel=document.getElementById('proteinSel').value;
+      var p=profiles[sel], info=document.getElementById('proteinInfo');
+      if(!p){info.textContent='Modo personalizado.';return;}
+      info.innerHTML=p.info+'<br><strong style="color:var(--accent)">↑ Pulsa 🥩 en cada zona para aplicar.</strong>';
+    }
+
+    function applyProteinToSensor(idx){
+      var sel=document.getElementById('proteinSel').value;
+      var p=profiles[sel];
+      if(!p){addLog('⚠ Selecciona una proteina','warn');return;}
+      limits[idx].min=p.min; limits[idx].max=p.max;
+      var selectEl=document.getElementById('proteinSel');
+      sensorProtein[idx]=selectEl.options[selectEl.selectedIndex].text;
+      buildLimits(); refreshLimDisp(); refreshAlarms();
+      var cp=document.getElementById('sp'+(idx+1));
+      cp.textContent='🥩 '+sensorProtein[idx]; cp.className='s-protein';
+      addLog('🥩 '+ZONES[idx]+' → '+sensorProtein[idx],'success');
+    }
+
+    function applyManualLimits(){
+      for(var i=0;i<4;i++){
+        var mn=parseFloat(document.getElementById('lm'+(i+1)).value)||0;
+        var mx=parseFloat(document.getElementById('lx'+(i+1)).value)||100;
+        limits[i].min=unit==='F'?fToC(mn):mn;
+        limits[i].max=unit==='F'?fToC(mx):mx;
+      }
+      refreshLimDisp(); refreshAlarms();
+      addLog('✅ Limites actualizados','success');
+    }
+
+    function refreshCards(){
+      for(var i=0;i<4;i++){
+        var ve=document.getElementById('v'+(i+1));
+        document.getElementById('u'+(i+1)).textContent=uS();
+        if(ve.dataset.c!==undefined&&ve.dataset.c!==''){
+          ve.textContent=dT(parseFloat(ve.dataset.c));
+        }
+        if(sMin[i]!==Infinity)document.getElementById('mn'+(i+1)).textContent=dT(sMin[i])+uS();
+        if(sMax[i]!==-Infinity)document.getElementById('mx'+(i+1)).textContent=dT(sMax[i])+uS();
+      }
+      refreshLimDisp(); refreshAlarms();
+    }
+
+    function refreshLimDisp(){
+      for(var i=0;i<4;i++){
+        var el=document.getElementById('sl'+(i+1));
+        if(el)el.innerHTML='Lim: <strong>'+dT(limits[i].min)+' — '+dT(limits[i].max)+'</strong> '+uS();
+      }
+    }
+
+    function refreshAlarms(){
+      for(var i=0;i<4;i++){
+        var ve=document.getElementById('v'+(i+1));
+        if(!ve||ve.dataset.c===undefined||ve.dataset.c==='')continue;
+        updateAlarm(i+1,parseFloat(ve.dataset.c));
+      }
+    }
+
+    function updateAlarm(idx,c){
+      var el=document.getElementById('a'+idx), lim=limits[idx-1];
+      var dmn=dT(lim.min), dmx=dT(lim.max);
+      if(c<lim.min){el.className='s-alarm a-warn';el.textContent='COCINANDO A ('+dmn+'-'+dmx+uS()+')';}
+      else if(c>lim.max){el.className='s-alarm a-danger';el.textContent='🚨PASO PUNTO DE ('+dmx+uS()+')';}
+      else{el.className='s-alarm a-ok';el.textContent='TERMINADO 🥩';}
+    }
+
+    function updateSensors(data){
+      var keys=['s1','s2','s3','s4'];
+      for(var i=0;i<4;i++){
+        var val=parseFloat(data[keys[i]]);
+        if(isNaN(val))continue;
+        lastValues[i] = val;
+        var ve=document.getElementById('v'+(i+1));
+        ve.dataset.c=val; ve.textContent=dT(val);
+        var pct=Math.min(Math.max((val/100)*100,0),100);
+        document.getElementById('b'+(i+1)).style.width=pct+'%';
+        if(val<sMin[i])sMin[i]=val;
+        if(val>sMax[i])sMax[i]=val;
+        document.getElementById('mn'+(i+1)).textContent=dT(sMin[i])+uS();
+        document.getElementById('mx'+(i+1)).textContent=dT(sMax[i])+uS();
+        updateAlarm(i+1,val);
+      }
+    }
+
+    function initChart() {
+      var ctx = document.getElementById('tempChart').getContext('2d');
+
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            { label:'A', data:[], borderColor:SC[0], backgroundColor:SBG[0], borderWidth:1.5, tension:0.3, fill:true, pointRadius:1 },
+            { label:'B', data:[], borderColor:SC[1], backgroundColor:SBG[1], borderWidth:1.5, tension:0.3, fill:true, pointRadius:1 },
+            { label:'C', data:[], borderColor:SC[2], backgroundColor:SBG[2], borderWidth:1.5, tension:0.3, fill:true, pointRadius:1 },
+            { label:'D', data:[], borderColor:SC[3], backgroundColor:SBG[3], borderWidth:1.5, tension:0.3, fill:true, pointRadius:1 }
+          ]
+        },
+
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 300 },
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            zoom: {
+              zoom: {
+                wheel: { enabled: true },
+                pinch: { enabled: true },
+                mode: 'x'
+              },
+              pan: {
+                enabled: true,
+                mode: 'x'
+              }
+            },
+            legend: {
+              labels: {
+                color: '#e4e8f0',
+                usePointStyle: true,
+                pointStyle: 'circle',
+                padding: 10,
+                font: { size: 10 }
+              }
+            },
+            tooltip: {
+              backgroundColor: '#1a2736',
+              titleColor: '#e4e8f0',
+              bodyColor: '#e4e8f0',
+              borderColor: '#2a3a4a',
+              borderWidth: 1,
+              cornerRadius: 6,
+              padding: 8
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#7c8594', maxTicksLimit: 8, font: { size: 9 } },
+              grid: { color: 'rgba(30,42,58,0.4)' }
+            },
+            y: {
+              ticks: {
+                color: '#7c8594',
+                font: { size: 9 },
+                callback: function(v) { return v + (unit === 'F' ? ' F' : ' C'); }
+              },
+              grid: { color: 'rgba(30,42,58,0.4)' },
+              suggestedMin: 0,
+              suggestedMax: 60
+            }
+          }
+        }
+      });
+    }
+
+    function addChartPoint(data){
+      var t=fmtTime(new Date());
+      var s1=parseFloat(data.s1)||0,s2=parseFloat(data.s2)||0,s3=parseFloat(data.s3)||0,s4=parseFloat(data.s4)||0;
+      var now=new Date();
+      csvData.push({date:now.toISOString().slice(0,10),time:t,s1:s1,s2:s2,s3:s3,s4:s4,oven:lastOvenTemp});
+      chart.data.labels.push(t);
+      chart.data.datasets[0].data.push(unit==='F'?cToF(s1):s1);
+      chart.data.datasets[1].data.push(unit==='F'?cToF(s2):s2);
+      chart.data.datasets[2].data.push(unit==='F'?cToF(s3):s3);
+      chart.data.datasets[3].data.push(unit==='F'?cToF(s4):s4);
+      if(chart.data.labels.length>MAX_PTS){chart.data.labels.shift();chart.data.datasets.forEach(ds=>ds.data.shift());}
+      chart.update('none');
+    }
+
+    function updateChartUnit(){
+      if(!chart)return;
+      chart.options.scales.y.ticks.callback=function(v){return v+(unit==='F'?' F':' C');};
+      chart.data.labels=[];
+      for(var d=0;d<4;d++)chart.data.datasets[d].data=[];
+      var st=Math.max(0,csvData.length-MAX_PTS);
+      for(var j=st;j<csvData.length;j++){
+        var r=csvData[j];
+        chart.data.labels.push(r.time);
+        for(var d=0;d<4;d++){var v=r['s'+(d+1)];chart.data.datasets[d].data.push(unit==='F'?cToF(v):v);}
+      }
+      chart.update();
+    }
+
+    function resetAll(){
+      if(chart){
+        chart.data.labels=[];chart.data.datasets.forEach(ds=>ds.data=[]);chart.update();
+      }
+      sMin=[Infinity,Infinity,Infinity,Infinity];sMax=[-Infinity,-Infinity,-Infinity,-Infinity];csvData=[];
+      for(var i=1;i<=4;i++){
+        document.getElementById('mn'+i).textContent='--';
+        document.getElementById('mx'+i).textContent='--';
+        document.getElementById('a'+i).className='s-alarm a-ok';
+        document.getElementById('a'+i).textContent='--';
+      }
+      addLog('🔄 Reset completo','warn');
+    }
+
+    function downloadCSV(){
+      if(!csvData.length){addLog('⚠ Sin datos','warn');return;}
+      var ul=unit==='F'?'F':'C';
+      var h='Fecha,Hora,ZonaA('+ul+'),ZonaB('+ul+'),ZonaC('+ul+'),ZonaD('+ul+'),Alarm_A,Alarm_B,Alarm_C,Alarm_D,Oven_Temp';
+      var lines=[h];
+      for(var i=0;i<csvData.length;i++){
+        var r=csvData[i],vs=[],al=[];
+        for(var s=1;s<=4;s++){
+          var c=r['s'+s];
+          vs.push(unit==='F'?cToF(c).toFixed(1):c.toFixed(1));
+          var lm=limits[s-1];
+          al.push(c<lm.min?'BAJA':c>lm.max?'ALTA':'OK');
+        }
+        lines.push(
+          r.date+','+
+          r.time+','+
+          vs.join(',')+','+
+          al.join(',')+','+
+          (r.oven!==null?(unit==='F'?cToF(r.oven).toFixed(1):r.oven.toFixed(1)):'')
+        );
+      }
+      var blob=new Blob([lines.join('\n')],{type:'text/csv'}),a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);a.download='cesars_bbq_'+new Date().toISOString().slice(0,10)+'.csv';
+      a.click();URL.revokeObjectURL(a.href);
+      addLog('💾 CSV: '+csvData.length+' registros','success');
+    }
+
+    function handleData(data){
+      updateSensors(data);
+      addChartPoint(data);
+      totalMsg++;
+      document.getElementById('msgCount').textContent = totalMsg;
+      document.getElementById('lastTime').textContent = fmtTime(new Date());
+      var logMsg =
+        'S1:' + dT(parseFloat(data.s1)) +
+        ' S2:' + dT(parseFloat(data.s2)) +
+        ' S3:' + dT(parseFloat(data.s3)) +
+        ' S4:' + dT(parseFloat(data.s4)) +
+        ' OVEN:' + (lastOvenTemp !== null ? (unit === 'F' ? cToF(lastOvenTemp).toFixed(1) : lastOvenTemp.toFixed(1))
+        : '--'
+      )
+      +
+        ' ' + uS();
+      addLog('📨 #' + totalMsg + ' ' + logMsg, '');
+    }
+
+    function checkGlobalAlarm() {
+      let alarm = false;
+      let msg = "";
+      for (let i = 0; i < 4; i++) {
+        const v = lastValues[i];
+        if (v == null) continue;
+        const min = limits[i].min;
+        const max = limits[i].max;
+        if (v > max) {
+          alarm = true;
+          msg = `${ZONES[i]} ALTA (${dT(v)} > ${dT(max)})`;
+          break;
+        }
+      }
+      if (!alarm && lastOvenTemp != null) {
+        if (lastOvenTemp < window.ovenLimits.min) {
+          alarm = true;
+          msg = `HORNO BAJO (${dT(lastOvenTemp)} < ${dT(window.ovenLimits.min)})`;
+        }
+        if (lastOvenTemp > window.ovenLimits.max) {
+          alarm = true;
+          msg = `HORNO ALTO (${dT(lastOvenTemp)} > ${dT(window.ovenLimits.max)})`;
+        }
+      }
+      const box = document.getElementById("globalAlarm");
+      const txt = document.getElementById("globalAlarmText");
+      if (alarm) {
+        txt.textContent = msg;
+        box.classList.remove("hidden");
+        playAlarmSound();
+      } else {
+        box.classList.add("hidden");
+        stopAlarmSound();
+      }
+    }
+
+    function toggleMQTT(){if(isMqtt)disconnectMQTT();else connectMQTT();}
+
+    // referencias globales para sliders de auto ajustes
+    let hystRange, inMinRange, inMaxRange, outMinRange, outMaxRange, stepRange, periodRange;
+    let hystVal, inMinVal, inMaxVal, outMinVal, outMaxVal, stepVal, periodVal;
+
+    function connectMQTT(){
+      var url=document.getElementById('brokerUrl').value.trim(), topic=document.getElementById('topic').value.trim();
+      if(!url||!topic){addLog('❌ Ingresa Broker y Topico','error');return;}
+      addLog('Conectando MQTT...','');
+      try{
+        mqttClient = mqtt.connect(url, {
+          clientId: 'bbq_' + Math.random().toString(16).substr(2,8),
+          clean: true,
+          connectTimeout: 10000,
+          reconnectPeriod: 5000
+        });
+        mqttClient.on('connect', function(){
+          isMqtt = true;
+          updSt();
+          addLog('✅ MQTT conectado','success');
+          mqttClient.subscribe("esp32/ntc/data");
+          mqttClient.subscribe("cesar/esp32/oven");
+          mqttClient.subscribe("cesar/esp32/servoIn/state");
+          mqttClient.subscribe("cesar/esp32/servoOut/state");
+          mqttClient.subscribe("cesar/esp32/mode/state");
+          mqttClient.subscribe("cesar/esp32/auto/hyst/state");
+          mqttClient.subscribe("cesar/esp32/auto/inMin/state");
+          mqttClient.subscribe("cesar/esp32/auto/inMax/state");
+          mqttClient.subscribe("cesar/esp32/auto/outMin/state");
+          mqttClient.subscribe("cesar/esp32/auto/outMax/state");
+          mqttClient.subscribe("cesar/esp32/auto/step/state");
+          mqttClient.subscribe("cesar/esp32/auto/period/state");
+          mqttClient.subscribe("cesar/esp32/oven/set");
+          mqttClient.subscribe("cesar/esp32/oven/leer");
+        });
+
+        mqttClient.on('message', function (t, m) {
+          const msg = m.toString();
+            if (t === "cesar/esp32/oven/set") {
+    window.ovenSetPoint = parseFloat(msg);
+    if (ovenChart) ovenChart.update();
+}
+          if (t === 'cesar/esp32/servoIn/state') {
+            const angle = parseInt(msg, 10);
+            const r = document.getElementById("servoInRange");
+            const l = document.getElementById("servoInPosLabel");
+            if (r && l) {
+              updatingServoIn = true;
+              r.value = angle;
+              l.textContent = angle + '°';
+              setTimeout(() => updatingServoIn = false, 50);
+            }
+            return;
+          }
+
+          if (t === 'cesar/esp32/servoOut/state') {
+            const angle = parseInt(msg, 10);
+            const r = document.getElementById("servoOutRange");
+            const l = document.getElementById("servoOutPosLabel");
+            if (r && l) {
+              updatingServoOut = true;
+              r.value = angle;
+              l.textContent = angle + '°';
+              setTimeout(() => updatingServoOut = false, 50);
+            }
+            return;
+          }
+
+          if (t === "cesar/esp32/mode/state") {
+            const mode = m.toString().trim();
+            setOvenModeUI(mode);
+            return;
+          }
+
+          if (t === "cesar/esp32/oven") {
+            var tempC = parseFloat(m.toString());
+            if (!isNaN(tempC)) {
+              lastOvenTemp = tempC;
+              const shown = (unit === 'F')
+                ? cToF(tempC).toFixed(1) + "°F"
+                : tempC.toFixed(1) + "°C";
+              document.getElementById("oven-temp-display").innerText = shown;
+              const graphValue = (unit === 'F') ? cToF(tempC) : tempC;
+              updateOvenChart(graphValue);
+              checkGlobalAlarm();
+            }
+
+
+            return;
+          }
+
+          // AUTO SETTINGS STATE (desde ESP32)
+          if (t === "cesar/esp32/auto/hyst/state") {
+            if (hystRange && hystVal) {
+              hystRange.value = msg;
+              hystVal.innerText = msg;
+            }
+            return;
+          }
+          if (t === "cesar/esp32/auto/inMin/state") {
+            if (inMinRange && inMinVal) {
+              inMinRange.value = msg;
+              inMinVal.innerText = msg;
+            }
+            return;
+          }
+          if (t === "cesar/esp32/auto/inMax/state") {
+            if (inMaxRange && inMaxVal) {
+              inMaxRange.value = msg;
+              inMaxVal.innerText = msg;
+            }
+            return;
+          }
+          if (t === "cesar/esp32/auto/outMin/state") {
+            if (outMinRange && outMinVal) {
+              outMinRange.value = msg;
+              outMinVal.innerText = msg;
+            }
+            return;
+          }
+          if (t === "cesar/esp32/auto/outMax/state") {
+            if (outMaxRange && outMaxVal) {
+              outMaxRange.value = msg;
+              outMaxVal.innerText = msg;
+            }
+            return;
+          }
+          if (t === "cesar/esp32/auto/step/state") {
+            if (stepRange && stepVal) {
+              stepRange.value = msg;
+              stepVal.innerText = msg;
+            }
+            return;
+          }
+          if (t === "cesar/esp32/auto/period/state") {
+            if (periodRange && periodVal) {
+              periodRange.value = msg;
+              periodVal.innerText = msg;
+            }
+            return;
+          }
+
+          // JSON SENSORS
+          try {
+            var d = JSON.parse(m.toString());
+            if (d.s1 !== undefined) {
+              handleData(d);
+              checkGlobalAlarm();
+            }
+          } catch (e) {
+            addLog('⚠ Mensaje invalido','warn');
+          }
+        });
+
+        mqttClient.on('error', function(e){
+          addLog('❌ Error: ' + e.message, 'error');
+        });
+
+        mqttClient.on('close', function(){
+          if(isMqtt){
+            isMqtt = false;
+            updSt();
+            addLog('🔌 MQTT cerrado','warn');
+          }
+        });
+
+      } catch(e){
+        addLog('❌ ' + e.message, 'error');
+      }
+    }
+
+    function disconnectMQTT(){
+      if(mqttClient){mqttClient.end(true); mqttClient=null;}
+      isMqtt=false;
+      updSt();
+      addLog('🔌 MQTT desconectado','');
+    }
+
+    async function toggleBLE(){if(isBle)disconnectBLE();else await connectBLE();}
+
+    async function connectBLE(){
+      if(!navigator.bluetooth){addLog('❌ Tu navegador no soporta Web Bluetooth. Usa Chrome en Android.','error');return;}
+      try{
+        addLog('🔎 Buscando CesarBBQ...','');
+        bleDevice=await navigator.bluetooth.requestDevice({filters:[{services:[NUS_SVC]}],optionalServices:[NUS_SVC]});
+        bleDevice.addEventListener('gattserverdisconnected',function(){
+          isBle=false;updSt();addLog('🔌 BLE desconectado','warn');
+          document.getElementById('bleTerminal').style.display='none';
+        });
+        addLog('Conectando GATT...','');
+        var server=await bleDevice.gatt.connect();
+        var svc=await server.getPrimaryService(NUS_SVC);
+        bleTx=await svc.getCharacteristic(NUS_TX);
+        bleRx=await svc.getCharacteristic(NUS_RX);
+        await bleTx.startNotifications();
+        bleTx.addEventListener('characteristicvaluechanged',function(e){
+          var val=new TextDecoder().decode(e.target.value);
+          bleBuffer+=val;
+          var nlIdx=bleBuffer.indexOf('\n');
+          while(nlIdx>=0){
+            var line=bleBuffer.substring(0,nlIdx).trim();
+            bleBuffer=bleBuffer.substring(nlIdx+1);
+            if(line.length>0)handleBLERx(line);
+            nlIdx=bleBuffer.indexOf('\n');
+          }
+        });
+        isBle=true;updSt();
+        document.getElementById('bleTerminal').style.display='block';
+        addLog('✅ BLE conectado a CesarBBQ','success');
+        addBleLog('Conectado. Escribe un comando o usa los botones rapidos.','#00e676');
+      }catch(e){
+        if(e.name!=='NotFoundError')addLog('❌ BLE: '+e.message,'error');
+        else addLog('⚠ Busqueda cancelada','warn');
+      }
+    }
+
+    function disconnectBLE(){
+      if(bleDevice&&bleDevice.gatt.connected)bleDevice.gatt.disconnect();
+      isBle=false;updSt();document.getElementById('bleTerminal').style.display='none';
+    }
+
+    async function sendBLEData(str){
+      if(!isBle||!bleRx)return;
+      var enc=new TextEncoder();
+      var data=enc.encode(str+'\n');
+      var chunk=200;
+      for(var i=0;i<data.length;i+=chunk){
+        var end=Math.min(i+chunk,data.length);
+        await bleRx.writeValueWithoutResponse(data.slice(i,end));
+        if(end<data.length)await new Promise(r=>setTimeout(r,20));
+      }
+    }
+
+    function sendBLECmd(){
+      var inp=document.getElementById('bleInput'),cmd=inp.value.trim();
+      if(!cmd)return;
+      addBleLog('> '+cmd,'#00d4ff');
+      sendBLEData(cmd);
+      inp.value='';
+    }
+
+    function sendBLEQuick(cmd){addBleLog('> '+cmd,'#00d4ff');sendBLEData(cmd);}
+
+    function handleBLERx(line){
+      addBleLog(line,'#e4e8f0');
+      if(handleWifiResponse(line))return;
+      try{
+        var obj=JSON.parse(line);
+        if(obj.s1!==undefined){handleData(obj);checkGlobalAlarm();}
+      }catch(e){}
+    }
+
+    function addBleLog(msg,color){
+      var el=document.getElementById('bleOutput');
+      var d=document.createElement('div');
+      d.style.color=color||'#7c8594';
+      d.textContent=msg;
+      el.appendChild(d);
+      el.scrollTop=el.scrollHeight;
+      while(el.children.length>100)el.removeChild(el.firstChild);
+    }
+
+    var wifiWaitingResponse=false;
+
+    function updateWifiBtns(){
+      var en=isBle;
+      document.getElementById('btnWifiConnect').disabled=!en;
+      document.getElementById('btnWifiScan').disabled=!en;
+      document.getElementById('btnWifiStatus').disabled=!en;
+      document.getElementById('btnWifiClear').disabled=!en;
+    }
+
+    function togglePswVis(){
+      var inp=document.getElementById('wifiPSW');
+      inp.type=inp.type==='password'?'text':'password';
+    }
+
+    function wifiConnect(){
+      if(!isBle){addLog('❌ Conecta BLE primero','error');return;}
+      var ssid=document.getElementById('wifiSSID').value.trim();
+      var psw=document.getElementById('wifiPSW').value;
+      if(!ssid){addLog('❌ Ingresa el nombre de la red (SSID)','error');return;}
+      var cmd='wifi:'+ssid+','+psw;
+      addBleLog('> '+cmd.replace(psw,'****'),'#ff9800');
+      sendBLEData(cmd);
+      addLog('📡 Enviando credenciales WiFi al ESP32...','warn');
+      wifiWaitingResponse=true;
+      var sb=document.getElementById('wifiStatusBox');
+      sb.style.display='block';
+      sb.innerHTML='⏳ Conectando a <strong>'+ssid+'</strong>... (puede tomar 10-15 seg)';
+    }
+
+    function wifiScan(){
+      if(!isBle){addLog('❌ Conecta BLE primero','error');return;}
+      addBleLog('> wifi:scan','#ff9800');
+      sendBLEData('wifi:scan');
+      addLog('🔎 Escaneando redes WiFi...','warn');
+      wifiWaitingResponse=true;
+      var sr=document.getElementById('wifiScanResults');
+      sr.style.display='block';
+      sr.innerHTML='<h4>🔎 Escaneando...</h4>';
+    }
+
+    function wifiStatus(){
+      if(!isBle){addLog('❌ Conecta BLE primero','error');return;}
+      addBleLog('> wifi:status','#ff9800');
+      sendBLEData('wifi:status');
+      wifiWaitingResponse=true;
+      var sb=document.getElementById('wifiStatusBox');
+      sb.style.display='block';
+      sb.innerHTML='⏳ Consultando estado WiFi...';
+    }
+
+    function wifiClear(){
+      if(!isBle){addLog('❌ Conecta BLE primero','error');return;}
+      if(!confirm('¿Borrar credenciales WiFi guardadas en el ESP32?'))return;
+      addBleLog('> wifi:clear','#ff9800');
+      sendBLEData('wifi:clear');
+      addLog('🗑 Borrando credenciales WiFi...','warn');
+      document.getElementById('wifiSSID').value='';
+      document.getElementById('wifiPSW').value='';
+    }
+
+    function handleWifiResponse(line){
+      if(line.indexOf('SCAN|')===0){
+        var parts=line.split('|');
+        var count=parseInt(parts[1])||0;
+        var sr=document.getElementById('wifiScanResults');
+        sr.style.display='block';
+        sr.innerHTML='<h4>📶 Redes encontradas ('+count+')</h4>';
+        return true;
+      }
+      if(line.indexOf('NET|')===0){
+        var parts=line.split('|');
+        var ssid=parts[1]||'?', rssi=parts[2]||'?', enc=parts[3]==='1';
+        var sr=document.getElementById('wifiScanResults');
+        var div=document.createElement('div');
+        div.className='wifi-net';
+        div.innerHTML='<span><span class="wifi-net-lock">'+(enc?'🔒':'🔓')+'</span> <span class="wifi-net-name">'+ssid+'</span></span><span class="wifi-net-rssi">'+rssi+' dBm '+wifiSignalBars(parseInt(rssi))+'</span>';
+        div.onclick=function(){document.getElementById('wifiSSID').value=ssid;addLog('✅ Red seleccionada: '+ssid,'success');};
+        sr.appendChild(div);
+        return true;
+      }
+      if(line.indexOf('SCAN_END')===0){
+        wifiWaitingResponse=false;
+        addLog('✅ Escaneo WiFi completado','success');
+        return true;
+      }
+      if(line.indexOf('WIFIST|')===0){
+        var parts=line.split('|');
+        var conn=parts[1]==='1', ssid=parts[2]||'--', ip=parts[3]||'--',
+            rssi=parts[4]||'--', mqttOk=parts[5]==='1', saved=parts[6]||'--';
+        var sb=document.getElementById('wifiStatusBox');
+        sb.style.display='block';
+        sb.innerHTML=
+          '<div>Estado: '+(conn?'<span class="ws-ok">✅ Conectado</span>':'<span class="ws-fail">❌ Desconectado</span>')+'</div>'+
+          '<div>Red: <strong>'+ssid+'</strong></div>'+
+          '<div>IP: <strong>'+ip+'</strong></div>'+
+          '<div>Señal: <strong>'+rssi+' dBm</strong> '+wifiSignalBars(parseInt(rssi))+'</div>'+
+          '<div>MQTT: '+(mqttOk?'<span class="ws-ok">✅ Conectado</span>':'<span class="ws-fail">❌ Desconectado</span>')+'</div>'+
+          '<div>Red guardada: <strong>'+saved+'</strong></div>';
+        document.getElementById('dotWifi').className='dot '+(conn?'on':'off');
+        document.getElementById('wifiSt').textContent=conn?ssid:'Off';
+        wifiWaitingResponse=false;
+        addLog('📶 WiFi: '+(conn?ssid+' ('+ip+')':'Desconectado'),'success');
+        return true;
+      }
+      if(line.indexOf('WIFI_OK|')===0){
+        var parts=line.split('|');
+        var ssid=parts[1]||'', ip=parts[2]||'';
+        var sb=document.getElementById('wifiStatusBox');
+        sb.style.display='block';
+        sb.innerHTML='<span class="ws-ok">✅ Conectado a <strong>'+ssid+'</strong></span><br>IP: <strong>'+ip+'</strong><br>Credenciales guardadas en flash 💾';
+        document.getElementById('dotWifi').className='dot on';
+        document.getElementById('wifiSt').textContent=ssid;
+        wifiWaitingResponse=false;
+        addLog('✅ WiFi conectado: '+ssid+' ('+ip+')','success');
+        return true;
+      }
+      if(line.indexOf('WIFI_FAIL|')===0){
+        var reason=line.substring(10);
+        var sb=document.getElementById('wifiStatusBox');
+        sb.style.display='block';
+        sb.innerHTML='<span class="ws-fail">❌ Fallo al conectar</span><br>'+reason;
+        document.getElementById('dotWifi').className='dot off';
+        document.getElementById('wifiSt').textContent='Fallo';
+        wifiWaitingResponse=false;
+        addLog('❌ WiFi fallo: '+reason,'error');
+        return true;
+      }
+      if(line.indexOf('WIFI_CLEARED')===0){
+        var sb=document.getElementById('wifiStatusBox');
+        sb.style.display='block';
+        sb.innerHTML='🗑 Credenciales borradas. Se usará red default al reiniciar.';
+        document.getElementById('dotWifi').className='dot off';
+        document.getElementById('wifiSt').textContent='--';
+        addLog('🗑 Credenciales WiFi borradas','warn');
+        return true;
+      }
+      return false;
+    }
+
+    function wifiSignalBars(rssi){
+      if(isNaN(rssi))return '';
+      if(rssi>-50)return '████';
+      if(rssi>-60)return '███▁';
+      if(rssi>-70)return '██▁▁';
+      return '█▁▁▁';
+    }
+
+    function updSt(){
+      document.getElementById('dotMqtt').className='dot '+(isMqtt?'on':'off');
+      document.getElementById('mqttSt').textContent=isMqtt?'On':'Off';
+      document.getElementById('dotBle').className='dot '+(isBle?'on':'off');
+      document.getElementById('bleSt').textContent=isBle?'On':'Off';
+      var bm=document.getElementById('btnMqtt');
+      bm.textContent=isMqtt?'Desconectar MQTT':'Conectar MQTT';
+      bm.className='btn '+(isMqtt?'btn-disconnect':'btn-mqtt');
+      var bb=document.getElementById('btnBle');
+      bb.textContent=isBle?'🔌 Desconectar BLE':'🔗 Conectar BLE';
+      bb.className='btn '+(isBle?'btn-disconnect':'btn-ble');
+      updateWifiBtns();
+    }
+
+    function addLog(msg,type){
+      var el=document.getElementById('logList'),d=document.createElement('div');
+      var t=fmtTime(new Date()),cls='';
+      if(type==='success')cls='log-success';else if(type==='error')cls='log-error';else if(type==='warn')cls='log-warn';
+      d.innerHTML='<span class="log-time">['+t+']</span> '+(cls?'<span class="'+cls+'">'+msg+'</span>':msg);
+      el.appendChild(d);el.scrollTop=el.scrollHeight;
+      while(el.children.length>150)el.removeChild(el.firstChild);
+    }
+
+    function clearLog(){document.getElementById('logList').innerHTML='';addLog('Log limpiado','');}
+
+    var ovenChart = null;
+
+const ovenLimitPlugin = {
+  id: "ovenLimits",
+  afterDatasetsDraw(chart, args, options) {
+    if (!window.ovenLimits) return;
+
+    const yScale = chart.scales.y;
+    const ctx = chart.ctx;
+
+    // Convertir límites según unidad
+    const minVal = (unit === 'F') ? cToF(window.ovenLimits.min) : window.ovenLimits.min;
+    const maxVal = (unit === 'F') ? cToF(window.ovenLimits.max) : window.ovenLimits.max;
+
+    // Convertir setpoint según unidad
+    const spVal = (unit === 'F') ? cToF(window.ovenSetPoint) : window.ovenSetPoint;
+
+    ctx.save();
+    ctx.lineWidth = 1.5;
+
+    // ---------------- MIN ----------------
+    ctx.strokeStyle = "#00e676";
+    const yMin = yScale.getPixelForValue(minVal);
+    ctx.beginPath();
+    ctx.moveTo(chart.chartArea.left, yMin);
+    ctx.lineTo(chart.chartArea.right, yMin);
+    ctx.stroke();
+
+    // ---------------- MAX ----------------
+    ctx.strokeStyle = "#ff5252";
+    const yMax = yScale.getPixelForValue(maxVal);
+    ctx.beginPath();
+    ctx.moveTo(chart.chartArea.left, yMax);
+    ctx.lineTo(chart.chartArea.right, yMax);
+    ctx.stroke();
+
+    // ---------------- SETPOINT ----------------
+    ctx.strokeStyle = "#00e5ff";     // celeste
+    ctx.setLineDash([6, 6]);         // punteado
+    const ySP = yScale.getPixelForValue(spVal);
+    ctx.beginPath();
+    ctx.moveTo(chart.chartArea.left, ySP);
+    ctx.lineTo(chart.chartArea.right, ySP);
+    ctx.stroke();
+
+    ctx.restore();
+  }
 };
 
-// ═══════════════════ UTILS ═══════════════════
-function cToF(c){return(c*9/5)+32;} function fToC(f){return(f-32)*5/9;}
-function dT(c){return unit==='F'?cToF(c).toFixed(1):c.toFixed(1);}
-function uS(){return unit==='F'?'\u00B0F':'\u00B0C';}
-function fmtTime(d){return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')+':'+d.getSeconds().toString().padStart(2,'0');}
 
-// ═══════════════════ TABS ═══════════════════
-function showTab(name){
-  var tabs=document.querySelectorAll('.tab'), panels=document.querySelectorAll('.panel');
-  var map={monitor:'panelMonitor',connect:'panelConnect',settings:'panelSettings',chart:'panelChart',log:'panelLog'};
-  tabs.forEach(function(t,i){t.classList.remove('active');});
-  panels.forEach(function(p){p.classList.remove('active');});
-  var names=['monitor','connect','settings','chart','log'];
-  var idx=names.indexOf(name);
-  if(idx>=0)tabs[idx].classList.add('active');
-  document.getElementById(map[name]).classList.add('active');
-  if(name==='chart'&&chart)chart.resize();
-}
+    function initOvenChart() {
+      const ctx = document.getElementById("ovenChart").getContext("2d");
 
-// ═══════════════════ BUILD SENSOR CARDS ═══════════════════
-function buildCards(){
-  var g=document.getElementById('sensorsGrid');
-  g.innerHTML='';
-  for(var i=0;i<4;i++){
-    g.innerHTML+=
-      '<div class="sensor-card">'+
-        '<div class="s-label">\u25C6 '+ZONES[i]+'</div>'+
-        '<div class="s-value" id="v'+(i+1)+'">--.-</div>'+
-        '<div class="s-unit" id="u'+(i+1)+'">'+uS()+'</div>'+
-        '<div class="s-alarm a-ok" id="a'+(i+1)+'">\u2713 OK</div><br>'+
-        '<div class="s-protein hidden" id="sp'+(i+1)+'"></div>'+
-        '<div class="s-limits" id="sl'+(i+1)+'">Lim: <strong>'+dT(limits[i].min)+' \u2014 '+dT(limits[i].max)+'</strong> '+uS()+'</div>'+
-        '<div class="s-bar"><div class="s-bar-fill" id="b'+(i+1)+'"></div></div>'+
-        '<div class="s-minmax"><span>Min:<span class="mn" id="mn'+(i+1)+'">--</span></span><span>Max:<span class="mx" id="mx'+(i+1)+'">--</span></span></div>'+
-      '</div>';
-  }
-}
-
-// ═══════════════════ BUILD LIMITS UI ═══════════════════
-function buildLimits(){
-  var c=document.getElementById('limitsContainer');
-  c.innerHTML='';
-  for(var i=0;i<4;i++){
-    var mn=unit==='F'?cToF(limits[i].min):limits[i].min;
-    var mx=unit==='F'?cToF(limits[i].max):limits[i].max;
-    c.innerHTML+=
-      '<div class="limit-row">'+
-        '<label>'+ZONES[i]+':</label>'+
-        '<span style="color:var(--muted);font-size:0.65rem">Min</span>'+
-        '<input type="number" class="limit-input" id="lm'+(i+1)+'" value="'+(Math.round(mn*10)/10)+'" step="0.5">'+
-        '<span style="color:var(--muted);font-size:0.65rem">Max</span>'+
-        '<input type="number" class="limit-input" id="lx'+(i+1)+'" value="'+(Math.round(mx*10)/10)+'" step="0.5">'+
-        '<span style="font-size:0.65rem;color:var(--muted)">'+uS()+'</span>'+
-        '<button class="btn-apply-sensor" onclick="applyProteinToSensor('+i+')">\u{1F969}</button>'+
-        '<span class="protein-tag" id="pt'+(i+1)+'" style="display:'+(sensorProtein[i]?'inline':'none')+'">'+
-          (sensorProtein[i]||'')+
-        '</span>'+
-      '</div>';
-  }
-}
-
-// ═══════════════════ UNIT ═══════════════════
-function setUnit(u){
-  unit=u;
-  document.getElementById('btnC').className='unit-btn'+(u==='C'?' active':'');
-  document.getElementById('btnF').className='unit-btn'+(u==='F'?' active':'');
-  buildLimits();
-  refreshCards();
-  updateChartUnit();
-  addLog('\u{1F321} Unidad: '+uS(),'warn');
-}
-
-// ═══════════════════ PROTEIN ═══════════════════
-function onProteinChange(){
-  var sel=document.getElementById('proteinSel').value;
-  var p=profiles[sel], info=document.getElementById('proteinInfo');
-  if(!p){info.textContent='Modo personalizado.';return;}
-  info.innerHTML=p.info+'<br><strong style="color:var(--accent)">\u2191 Pulsa \u{1F969} en cada zona para aplicar.</strong>';
-}
-function applyProteinToSensor(idx){
-  var sel=document.getElementById('proteinSel').value;
-  var p=profiles[sel];
-  if(!p){addLog('\u26A0 Selecciona una proteina','warn');return;}
-  limits[idx].min=p.min; limits[idx].max=p.max;
-  var selectEl=document.getElementById('proteinSel');
-  sensorProtein[idx]=selectEl.options[selectEl.selectedIndex].text;
-  buildLimits(); refreshLimDisp(); refreshAlarms();
-  var cp=document.getElementById('sp'+(idx+1));
-  cp.textContent='\u{1F969} '+sensorProtein[idx]; cp.className='s-protein';
-  addLog('\u{1F969} '+ZONES[idx]+' \u2192 '+sensorProtein[idx],'success');
-}
-function applyManualLimits(){
-  for(var i=0;i<4;i++){
-    var mn=parseFloat(document.getElementById('lm'+(i+1)).value)||0;
-    var mx=parseFloat(document.getElementById('lx'+(i+1)).value)||100;
-    limits[i].min=unit==='F'?fToC(mn):mn;
-    limits[i].max=unit==='F'?fToC(mx):mx;
-  }
-  refreshLimDisp(); refreshAlarms();
-  addLog('\u2705 Limites actualizados','success');
-}
-
-// ═══════════════════ REFRESH ═══════════════════
-function refreshCards(){
-  for(var i=0;i<4;i++){
-    var ve=document.getElementById('v'+(i+1));
-    document.getElementById('u'+(i+1)).textContent=uS();
-    if(ve.dataset.c!==undefined&&ve.dataset.c!==''){
-      ve.textContent=dT(parseFloat(ve.dataset.c));
+      ovenChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [{
+            label: "Oven Temp",
+            data: [],
+            borderColor: "#ff9800",
+            backgroundColor: "rgba(255,152,0,0.15)",
+            borderWidth: 2,
+            tension: 0.25,
+            fill: true,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            zoom: {
+              zoom: {
+                wheel: { enabled: true },
+                pinch: { enabled: true },
+                mode: "x"
+              },
+              pan: {
+                enabled: true,
+                mode: "x"
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: false,
+              ticks: { color: "#e4e8f0" },
+              grid: { color: "rgba(255,255,255,0.1)" }
+            },
+            x: {
+              ticks: { color: "#e4e8f0" },
+              grid: { color: "rgba(255,255,255,0.1)" }
+            }
+          }
+        },
+        plugins: [ovenLimitPlugin]
+      });
     }
-    if(sMin[i]!==Infinity)document.getElementById('mn'+(i+1)).textContent=dT(sMin[i])+uS();
-    if(sMax[i]!==-Infinity)document.getElementById('mx'+(i+1)).textContent=dT(sMax[i])+uS();
-  }
-  refreshLimDisp(); refreshAlarms();
-}
-function refreshLimDisp(){
-  for(var i=0;i<4;i++){
-    var el=document.getElementById('sl'+(i+1));
-    if(el)el.innerHTML='Lim: <strong>'+dT(limits[i].min)+' \u2014 '+dT(limits[i].max)+'</strong> '+uS();
-  }
-}
-function refreshAlarms(){
-  for(var i=0;i<4;i++){
-    var ve=document.getElementById('v'+(i+1));
-    if(!ve||ve.dataset.c===undefined||ve.dataset.c==='')continue;
-    updateAlarm(i+1,parseFloat(ve.dataset.c));
-  }
-}
-function updateAlarm(idx,c){
-  var el=document.getElementById('a'+idx), lim=limits[idx-1];
-  var dmn=dT(lim.min), dmx=dT(lim.max);
-  if(c<lim.min){el.className='s-alarm a-warn';el.textContent='\u25BC BAJA ('+dmn+uS()+')';}
-  else if(c>lim.max){el.className='s-alarm a-danger';el.textContent='\u25B2 ALTA ('+dmx+uS()+')';}
-  else{el.className='s-alarm a-ok';el.textContent='\u2713 OK';}
-}
 
-// ═══════════════════ UPDATE SENSORS ═══════════════════
-function updateSensors(data){
-  var keys=['s1','s2','s3','s4'];
-  for(var i=0;i<4;i++){
-    var val=parseFloat(data[keys[i]]);
-    if(isNaN(val))continue;
-    var ve=document.getElementById('v'+(i+1));
-    ve.dataset.c=val; ve.textContent=dT(val);
-    var pct=Math.min(Math.max((val/100)*100,0),100);
-    document.getElementById('b'+(i+1)).style.width=pct+'%';
-    if(val<sMin[i])sMin[i]=val;
-    if(val>sMax[i])sMax[i]=val;
-    document.getElementById('mn'+(i+1)).textContent=dT(sMin[i])+uS();
-    document.getElementById('mx'+(i+1)).textContent=dT(sMax[i])+uS();
-    updateAlarm(i+1,val);
-  }
-}
-
-// ═══════════════════ CHART ═══════════════════
-function initChart(){
-  var ctx=document.getElementById('tempChart').getContext('2d');
-  chart=new Chart(ctx,{
-    type:'line',
-    data:{labels:[],datasets:[
-      {label:'A',data:[],borderColor:SC[0],backgroundColor:SBG[0],borderWidth:1.5,tension:0.3,fill:true,pointRadius:1},
-      {label:'B',data:[],borderColor:SC[1],backgroundColor:SBG[1],borderWidth:1.5,tension:0.3,fill:true,pointRadius:1},
-      {label:'C',data:[],borderColor:SC[2],backgroundColor:SBG[2],borderWidth:1.5,tension:0.3,fill:true,pointRadius:1},
-      {label:'D',data:[],borderColor:SC[3],backgroundColor:SBG[3],borderWidth:1.5,tension:0.3,fill:true,pointRadius:1}
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},
-      interaction:{mode:'index',intersect:false},
-      scales:{
-        x:{ticks:{color:'#7c8594',maxTicksLimit:8,font:{size:9}},grid:{color:'rgba(30,42,58,0.4)'}},
-        y:{ticks:{color:'#7c8594',font:{size:9},callback:function(v){return v+(unit==='F'?' F':' C');}},
-          grid:{color:'rgba(30,42,58,0.4)'},suggestedMin:0,suggestedMax:60}
-      },
-      plugins:{legend:{labels:{color:'#e4e8f0',usePointStyle:true,pointStyle:'circle',padding:10,font:{size:10}}},
-        tooltip:{backgroundColor:'#1a2736',titleColor:'#e4e8f0',bodyColor:'#e4e8f0',borderColor:'#2a3a4a',borderWidth:1,cornerRadius:6,padding:8}}
-    }
-  });
-}
-function addChartPoint(data){
-  var t=fmtTime(new Date());
-  var s1=parseFloat(data.s1)||0,s2=parseFloat(data.s2)||0,s3=parseFloat(data.s3)||0,s4=parseFloat(data.s4)||0;
-  var now=new Date();
-  csvData.push({date:now.toISOString().slice(0,10),time:t,s1:s1,s2:s2,s3:s3,s4:s4});
-  chart.data.labels.push(t);
-  chart.data.datasets[0].data.push(unit==='F'?cToF(s1):s1);
-  chart.data.datasets[1].data.push(unit==='F'?cToF(s2):s2);
-  chart.data.datasets[2].data.push(unit==='F'?cToF(s3):s3);
-  chart.data.datasets[3].data.push(unit==='F'?cToF(s4):s4);
-  if(chart.data.labels.length>MAX_PTS){chart.data.labels.shift();chart.data.datasets.forEach(function(ds){ds.data.shift();});}
-  chart.update('none');
-}
-function updateChartUnit(){
-  if(!chart)return;
-  chart.options.scales.y.ticks.callback=function(v){return v+(unit==='F'?' F':' C');};
-  chart.data.labels=[];
-  for(var d=0;d<4;d++)chart.data.datasets[d].data=[];
-  var st=Math.max(0,csvData.length-MAX_PTS);
-  for(var j=st;j<csvData.length;j++){
-    var r=csvData[j];
-    chart.data.labels.push(r.time);
-    for(var d=0;d<4;d++){var v=r['s'+(d+1)];chart.data.datasets[d].data.push(unit==='F'?cToF(v):v);}
-  }
-  chart.update('none');
-}
-function resetAll(){
-  chart.data.labels=[];chart.data.datasets.forEach(function(ds){ds.data=[];});chart.update();
-  sMin=[Infinity,Infinity,Infinity,Infinity];sMax=[-Infinity,-Infinity,-Infinity,-Infinity];csvData=[];
-  for(var i=1;i<=4;i++){document.getElementById('mn'+i).textContent='--';document.getElementById('mx'+i).textContent='--';
-    document.getElementById('a'+i).className='s-alarm a-ok';document.getElementById('a'+i).textContent='\u2713 OK';}
-  addLog('\u{1F504} Reset completo','warn');
-}
-
-// ═══════════════════ CSV ═══════════════════
-function downloadCSV(){
-  if(!csvData.length){addLog('\u26A0 Sin datos','warn');return;}
-  var ul=unit==='F'?'F':'C';
-  var h='Fecha,Hora,ZonaA('+ul+'),ZonaB('+ul+'),ZonaC('+ul+'),ZonaD('+ul+'),Alarm_A,Alarm_B,Alarm_C,Alarm_D';
-  var lines=[h];
-  for(var i=0;i<csvData.length;i++){
-    var r=csvData[i],vs=[],al=[];
-    for(var s=1;s<=4;s++){
-      var c=r['s'+s];
-      vs.push(unit==='F'?cToF(c).toFixed(1):c.toFixed(1));
-      var lm=limits[s-1];
-      al.push(c<lm.min?'BAJA':c>lm.max?'ALTA':'OK');
-    }
-    lines.push(r.date+','+r.time+','+vs.join(',')+','+al.join(','));
-  }
-  var blob=new Blob([lines.join('\n')],{type:'text/csv'}),a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);a.download='cesars_bbq_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();URL.revokeObjectURL(a.href);
-  addLog('\u{1F4BE} CSV: '+csvData.length+' registros','success');
-}
-
-// ═══════════════════ MQTT ═══════════════════
-function toggleMQTT(){if(isMqtt)disconnectMQTT();else connectMQTT();}
-function connectMQTT(){
-  var url=document.getElementById('brokerUrl').value.trim(), topic=document.getElementById('topic').value.trim();
-  if(!url||!topic){addLog('\u274C Ingresa Broker y Topico','error');return;}
-  addLog('Conectando MQTT...','');
-  try{
-    mqttClient=mqtt.connect(url,{clientId:'bbq_'+Math.random().toString(16).substr(2,8),clean:true,connectTimeout:10000,reconnectPeriod:5000});
-    mqttClient.on('connect',function(){
-      isMqtt=true;updSt();
-      addLog('\u2705 MQTT conectado','success');
-      mqttClient.subscribe(topic,function(e){if(!e)addLog('\u{1F4E1} Suscrito: '+topic,'success');});
-    });
-    mqttClient.on('message',function(t,m){
-      try{var d=JSON.parse(m.toString());handleData(d);}catch(e){addLog('\u26A0 Mensaje invalido','warn');}
-    });
-    mqttClient.on('error',function(e){addLog('\u274C Error: '+e.message,'error');});
-    mqttClient.on('close',function(){if(isMqtt){isMqtt=false;updSt();addLog('\u{1F50C} MQTT cerrado','warn');}});
-  }catch(e){addLog('\u274C '+e.message,'error');}
-}
-function disconnectMQTT(){if(mqttClient){mqttClient.end(true);mqttClient=null;}isMqtt=false;updSt();addLog('\u{1F50C} MQTT desconectado','');}
-
-// ═══════════════════ BLE ═══════════════════
-async function toggleBLE(){if(isBle)disconnectBLE();else await connectBLE();}
-async function connectBLE(){
-  if(!navigator.bluetooth){addLog('\u274C Tu navegador no soporta Web Bluetooth. Usa Chrome en Android.','error');return;}
-  try{
-    addLog('\u{1F50E} Buscando CesarBBQ...','');
-    bleDevice=await navigator.bluetooth.requestDevice({filters:[{services:[NUS_SVC]}],optionalServices:[NUS_SVC]});
-    bleDevice.addEventListener('gattserverdisconnected',function(){isBle=false;updSt();addLog('\u{1F50C} BLE desconectado','warn');
-      document.getElementById('bleTerminal').style.display='none';});
-    addLog('Conectando GATT...','');
-    var server=await bleDevice.gatt.connect();
-    var svc=await server.getPrimaryService(NUS_SVC);
-    bleTx=await svc.getCharacteristic(NUS_TX);
-    bleRx=await svc.getCharacteristic(NUS_RX);
-    await bleTx.startNotifications();
-    bleTx.addEventListener('characteristicvaluechanged',function(e){
-      var val=new TextDecoder().decode(e.target.value);
-      bleBuffer+=val;
-      var nlIdx=bleBuffer.indexOf('\n');
-      while(nlIdx>=0){
-        var line=bleBuffer.substring(0,nlIdx).trim();
-        bleBuffer=bleBuffer.substring(nlIdx+1);
-        if(line.length>0)handleBLERx(line);
-        nlIdx=bleBuffer.indexOf('\n');
+    function updateOvenChart(temp) {
+      if (!ovenChart) return;
+      const now = Date.now();
+      if (now - lastOvenUpdate < 1000) return;
+      lastOvenUpdate = now;
+      const t = fmtTime(new Date());
+      ovenChart.data.labels.push(t);
+      ovenChart.data.datasets[0].data.push(temp);
+      if (ovenChart.data.labels.length > MAX_PTS) {
+        ovenChart.data.labels.shift();
+        ovenChart.data.datasets[0].data.shift();
       }
+      const dataMin = Math.min(...ovenChart.data.datasets[0].data);
+      const dataMax = Math.max(...ovenChart.data.datasets[0].data);
+      const limitMin = (unit === 'F')
+        ? cToF(window.ovenLimits.min)
+        : window.ovenLimits.min;
+      const limitMax = (unit === 'F')
+        ? cToF(window.ovenLimits.max)
+        : window.ovenLimits.max;
+      const finalMin = Math.min(dataMin, limitMin) - 5;
+      const finalMax = Math.max(dataMax, limitMax) + 5;
+      ovenChart.options.scales.y.min = finalMin;
+      ovenChart.options.scales.y.max = finalMax;
+      ovenChart.update();
+    }
+
+    function setupOvenLimits() {
+      const presetSel = document.getElementById("ovenPreset");
+      const minInput = document.getElementById("ovenMin");
+      const maxInput = document.getElementById("ovenMax");
+      const btnApply = document.getElementById("applyOvenLimits");
+      const spInput = document.getElementById("ovenSetpoint");
+      const btnSet = document.getElementById("applyOvenSetpoint");
+
+      presetSel.onchange = () => {
+        const p = presetSel.value;
+        if (p !== "custom") {
+          minInput.value = getPresetValue(ovenPresets[p].min);
+          maxInput.value = getPresetValue(ovenPresets[p].max);
+          window.ovenLimits.min = ovenPresets[p].min;
+          window.ovenLimits.max = ovenPresets[p].max;
+          if (mqttClient) {
+            mqttClient.publish("cesar/esp32/oven/min", String(window.ovenLimits.min));
+            mqttClient.publish("cesar/esp32/oven/max", String(window.ovenLimits.max));
+          }
+          ovenChart.update();
+        }
+      };
+  document.getElementById("updatesettings").onclick = function(){
+if (mqttClient) {
+  
+  hystVal.innerText = hystRange.value;
+  inMinVal.innerText = inMinRange.value;
+  inMaxVal.innerText = inMaxRange.value;
+  outMinVal.innerText = outMinRange.value;
+  outMaxVal.innerText = outMaxRange.value;
+  stepVal.innerText = stepRange.value;
+  periodVal.innerText = periodRange.value;
+
+
+       // mqttClient.publish("cesar/esp32/oven/leer", String("1"));
+        addLog("🤖 Valores de los sliders actualizados","success");
+      };
+    }
+
+
+
+      btnApply.onclick = () => {
+        const rawMin = parseFloat(minInput.value);
+        const rawMax = parseFloat(maxInput.value);
+        if (isNaN(rawMin) || isNaN(rawMax)) return;
+        window.ovenLimits.min = (unit === 'F') ? fToC(rawMin) : rawMin;
+        window.ovenLimits.max = (unit === 'F') ? fToC(rawMax) : rawMax;
+        if (mqttClient) {
+          mqttClient.publish("cesar/esp32/oven/min", String(window.ovenLimits.min));
+          mqttClient.publish("cesar/esp32/oven/max", String(window.ovenLimits.max));
+        }
+        ovenChart.update();
+        addLog('🔥 Oven limits → '+rawMin+' - '+rawMax+'°'+unit,'success');
+      };
+
+      btnSet.onclick = () => {
+        const raw = parseFloat(spInput.value);
+        if (isNaN(raw)) return;
+        const spC = (unit === 'F') ? fToC(raw) : raw;
+        window.ovenSetpoint = spC;
+        if (mqttClient) {
+          mqttClient.publish("cesar/esp32/oven/set", String(spC));
+        }
+        addLog('🔥 Setpoint horno → '+raw.toFixed(1)+'°'+unit,'success');
+      };
+    }
+
+
+    function refreshOvenUI() {
+      const presetSel = document.getElementById("ovenPreset");
+      const minInput = document.getElementById("ovenMin");
+      const maxInput = document.getElementById("ovenMax");
+      const spInput  = document.getElementById("ovenSetpoint");
+      const p = presetSel.value;
+      if (p !== "custom") {
+        minInput.value = getPresetValue(ovenPresets[p].min);
+        maxInput.value = getPresetValue(ovenPresets[p].max);
+      } else {
+        minInput.value = (unit === 'F')
+          ? cToF(window.ovenLimits.min).toFixed(1)
+          : window.ovenLimits.min.toFixed(1);
+        maxInput.value = (unit === 'F')
+          ? cToF(window.ovenLimits.max).toFixed(1)
+          : window.ovenLimits.max.toFixed(1);
+      }
+      if (spInput) {
+        spInput.value = (unit === 'F')
+          ? cToF(window.ovenSetpoint).toFixed(1)
+          : window.ovenSetpoint.toFixed(1);
+      }
+    }
+
+    function refreshPresetList() {
+      const presetSel = document.getElementById("ovenPreset");
+      for (let key in ovenPresets) {
+        const opt = presetSel.querySelector(`option[value="${key}"]`);
+        if (!opt) continue;
+        const min = getPresetValue(ovenPresets[key].min);
+        const max = getPresetValue(ovenPresets[key].max);
+        opt.textContent = `${key.toUpperCase()} (${min}–${max}°${unit})`;
+      }
+    }
+
+    function setOvenModeUI(mode) {
+      const autoBtn = document.getElementById("autoModeBtn");
+      const manualBtn = document.getElementById("manualModeBtn");
+      if (mode === "auto") {
+        autoBtn.classList.add("active");
+        manualBtn.classList.remove("active");
+      } else {
+        manualBtn.classList.add("active");
+        autoBtn.classList.remove("active");
+      }
+    }
+
+    function playAlarmSound() {
+      const snd = document.getElementById("alarmSound");
+      snd.loop = true;
+      snd.volume = 1.0;
+      snd.play().catch(e => console.log("Autoplay bloqueado"));
+    }
+
+    function stopAlarmSound() {
+      const snd = document.getElementById("alarmSound");
+      snd.pause();
+      snd.currentTime = 0;
+    }
+
+    window.addEventListener('load', function() {
+      buildCards();
+      buildLimits();
+      initChart();
+      initOvenChart();
+      updSt();
+      setupOvenLimits();
+
+      // servo sliders
+      document.getElementById("servoInRange").addEventListener("input", function(e){
+        if (updatingServoIn) return;
+        if (mqttClient) mqttClient.publish("cesar/esp32/servoIn", e.target.value);
+        document.getElementById("servoInPosLabel").textContent = e.target.value + "°";
+      });
+
+      document.getElementById("servoOutRange").addEventListener("input", function(e){
+        if (updatingServoOut) return;
+        if (mqttClient) mqttClient.publish("cesar/esp32/servoOut", e.target.value);
+        document.getElementById("servoOutPosLabel").textContent = e.target.value + "°";
+      });
+
+      document.getElementById("autoModeBtn").onclick = function(){
+        if (mqttClient) mqttClient.publish("cesar/esp32/mode", "auto");
+        setOvenModeUI("auto");
+      };
+
+      document.getElementById("manualModeBtn").onclick = function(){
+        if (mqttClient) mqttClient.publish("cesar/esp32/mode", "manual");
+        setOvenModeUI("manual");
+      };
+
+      refreshOvenUI();
+      refreshPresetList();
+
+      // AUTO AJUSTES: obtener referencias
+      hystRange   = document.getElementById("hystRange");
+      inMinRange  = document.getElementById("inMinRange");
+      inMaxRange  = document.getElementById("inMaxRange");
+      outMinRange = document.getElementById("outMinRange");
+      outMaxRange = document.getElementById("outMaxRange");
+      stepRange   = document.getElementById("stepRange");
+      periodRange = document.getElementById("periodRange");
+
+      hystVal   = document.getElementById("hystVal");
+      inMinVal  = document.getElementById("inMinVal");
+      inMaxVal  = document.getElementById("inMaxVal");
+      outMinVal = document.getElementById("outMinVal");
+      outMaxVal = document.getElementById("outMaxVal");
+      stepVal   = document.getElementById("stepVal");
+      periodVal = document.getElementById("periodVal");
+
+      // sliders -> MQTT (en vivo)
+      hystRange.onchange = e => {
+        hystVal.innerText = e.target.value;
+        if (mqttClient) mqttClient.publish("cesar/esp32/auto/hyst/state", e.target.value);
+        addLog("🤖 Ajustes Hyst enviados al ESP32","success");
+      };
+      inMinRange.onchange = e => {
+        inMinVal.innerText = e.target.value;
+        if (mqttClient) mqttClient.publish("cesar/esp32/auto/inMin/state", e.target.value);
+        addLog("🤖 Ajustes In Min enviados al ESP32","success");
+      };
+      inMaxRange.onchange = e => {
+        inMaxVal.innerText = e.target.value;
+        if (mqttClient) mqttClient.publish("cesar/esp32/auto/inMax/state", e.target.value);
+        addLog("🤖 Ajustes In Max enviados al ESP32","success");
+      };
+      outMinRange.onchange = e => {
+        outMinVal.innerText = e.target.value;
+        if (mqttClient) mqttClient.publish("cesar/esp32/auto/outMin/state", e.target.value);
+        addLog("🤖 Ajustes Out Min enviados al ESP32","success");
+      };
+      outMaxRange.onchange = e => {
+        outMaxVal.innerText = e.target.value;
+        if (mqttClient) mqttClient.publish("cesar/esp32/auto/outMax/state", e.target.value);
+        addLog("🤖 Ajustes Out Max enviados al ESP32","success");
+      };
+      stepRange.onchange = e => {
+        stepVal.innerText = e.target.value;
+        if (mqttClient) mqttClient.publish("cesar/esp32/auto/step/state", e.target.value);
+        addLog("🤖 Ajustes step enviados al ESP32","success");
+      };
+      periodRange.onchange = e => {
+        periodVal.innerText = e.target.value;
+        if (mqttClient) mqttClient.publish("cesar/esp32/auto/period/state", e.target.value);
+        addLog("🤖 Ajustes periodo enviados al ESP32","success");
+      };
+
+
+      // botón aplicar (reenvía todos)
+      const applyAutoSettings = document.getElementById("applyAutoSettings");
+      applyAutoSettings.onclick = () => {
+        if (!mqttClient) return;
+      //function applyAutoSettings() {
+
+        //let hystRange = document.getElementById("hystRange").value;
+
+        //mqttClient.publish("cesar/esp32/auto/hyst/state",   hystRange.value);
+        //mqttClient.publish("cesar/esp32/auto/inMin/state",  inMinRange.value);
+        //mqttClient.publish("cesar/esp32/auto/inMax/state",  inMaxRange.value);
+        //mqttClient.publish("cesar/esp32/auto/outMin/state", outMinRange.value);
+        //mqttClient.publish("cesar/esp32/auto/outMax/state", outMaxRange.value);
+        //mqttClient.publish("cesar/esp32/auto/step/state",   stepRange.value);
+        //mqttClient.publish("cesar/esp32/auto/period/state", periodRange.value);
+        addLog("🤖 Ajustes automáticos enviados al ESP32","success");
+      };
     });
-    isBle=true;updSt();
-    document.getElementById('bleTerminal').style.display='block';
-    addLog('\u2705 BLE conectado a CesarBBQ','success');
-    addBleLog('Conectado. Escribe un comando o usa los botones rapidos.','#00e676');
-  }catch(e){
-    if(e.name!=='NotFoundError')addLog('\u274C BLE: '+e.message,'error');
-    else addLog('\u26A0 Busqueda cancelada','warn');
-  }
-}
-function disconnectBLE(){
-  if(bleDevice&&bleDevice.gatt.connected)bleDevice.gatt.disconnect();
-  isBle=false;updSt();document.getElementById('bleTerminal').style.display='none';
-}
-async function sendBLEData(str){
-  if(!isBle||!bleRx)return;
-  var enc=new TextEncoder();
-  var data=enc.encode(str+'\n');
-  var chunk=200;
-  for(var i=0;i<data.length;i+=chunk){
-    var end=Math.min(i+chunk,data.length);
-    await bleRx.writeValueWithoutResponse(data.slice(i,end));
-    if(end<data.length)await new Promise(function(r){setTimeout(r,20);});
-  }
-}
-function sendBLECmd(){
-  var inp=document.getElementById('bleInput'),cmd=inp.value.trim();
-  if(!cmd)return;
-  addBleLog('> '+cmd,'#00d4ff');
-  sendBLEData(cmd);
-  inp.value='';
-}
-function sendBLEQuick(cmd){addBleLog('> '+cmd,'#00d4ff');sendBLEData(cmd);}
-function handleBLERx(line){
-  addBleLog(line,'#e4e8f0');
-  // Check WiFi provisioning responses first
-  if(handleWifiResponse(line))return;
-  try{
-    var obj=JSON.parse(line);
-    if(obj.s1!==undefined){handleData(obj);}
-  }catch(e){}
-}
-function addBleLog(msg,color){
-  var el=document.getElementById('bleOutput');
-  var d=document.createElement('div');
-  d.style.color=color||'#7c8594';
-  d.textContent=msg;
-  el.appendChild(d);
-  el.scrollTop=el.scrollHeight;
-  while(el.children.length>100)el.removeChild(el.firstChild);
-}
+  </script>
 
-// ═══════════════════ DATA HANDLER ═══════════════════
-function handleData(data){
-  updateSensors(data);
-  addChartPoint(data);
-  totalMsg++;
-  document.getElementById('msgCount').textContent=totalMsg;
-  document.getElementById('lastTime').textContent=fmtTime(new Date());
-  var logMsg='S1:'+dT(parseFloat(data.s1))+' S2:'+dT(parseFloat(data.s2))+' S3:'+dT(parseFloat(data.s3))+' S4:'+dT(parseFloat(data.s4))+' '+uS();
-  addLog('\u{1F4E8} #'+totalMsg+' '+logMsg,'');
-}
-
-// ═══════════════════ WIFI PROVISIONING ═══════════════════
-var wifiWaitingResponse=false;
-
-function updateWifiBtns(){
-  var en=isBle;
-  document.getElementById('btnWifiConnect').disabled=!en;
-  document.getElementById('btnWifiScan').disabled=!en;
-  document.getElementById('btnWifiStatus').disabled=!en;
-  document.getElementById('btnWifiClear').disabled=!en;
-}
-
-function togglePswVis(){
-  var inp=document.getElementById('wifiPSW');
-  inp.type=inp.type==='password'?'text':'password';
-}
-
-function wifiConnect(){
-  if(!isBle){addLog('\u274C Conecta BLE primero','error');return;}
-  var ssid=document.getElementById('wifiSSID').value.trim();
-  var psw=document.getElementById('wifiPSW').value;
-  if(!ssid){addLog('\u274C Ingresa el nombre de la red (SSID)','error');return;}
-  var cmd='wifi:'+ssid+','+psw;
-  addBleLog('> '+cmd.replace(psw,'****'),'#ff9800');
-  sendBLEData(cmd);
-  addLog('\u{1F4E1} Enviando credenciales WiFi al ESP32...','warn');
-  wifiWaitingResponse=true;
-  var sb=document.getElementById('wifiStatusBox');
-  sb.style.display='block';
-  sb.innerHTML='\u23F3 Conectando a <strong>'+ssid+'</strong>... (puede tomar 10-15 seg)';
-}
-
-function wifiScan(){
-  if(!isBle){addLog('\u274C Conecta BLE primero','error');return;}
-  addBleLog('> wifi:scan','#ff9800');
-  sendBLEData('wifi:scan');
-  addLog('\u{1F50E} Escaneando redes WiFi...','warn');
-  wifiWaitingResponse=true;
-  var sr=document.getElementById('wifiScanResults');
-  sr.style.display='block';
-  sr.innerHTML='<h4>\u{1F50E} Escaneando...</h4>';
-}
-
-function wifiStatus(){
-  if(!isBle){addLog('\u274C Conecta BLE primero','error');return;}
-  addBleLog('> wifi:status','#ff9800');
-  sendBLEData('wifi:status');
-  wifiWaitingResponse=true;
-  var sb=document.getElementById('wifiStatusBox');
-  sb.style.display='block';
-  sb.innerHTML='\u23F3 Consultando estado WiFi...';
-}
-
-function wifiClear(){
-  if(!isBle){addLog('\u274C Conecta BLE primero','error');return;}
-  if(!confirm('\u00BFBorrar credenciales WiFi guardadas en el ESP32?'))return;
-  addBleLog('> wifi:clear','#ff9800');
-  sendBLEData('wifi:clear');
-  addLog('\u{1F5D1} Borrando credenciales WiFi...','warn');
-  document.getElementById('wifiSSID').value='';
-  document.getElementById('wifiPSW').value='';
-}
-
-function handleWifiResponse(line){
-  // Parse wifi scan results
-  if(line.indexOf('SCAN|')===0){
-    var parts=line.split('|');
-    // Format: SCAN|count
-    var count=parseInt(parts[1])||0;
-    var sr=document.getElementById('wifiScanResults');
-    sr.style.display='block';
-    sr.innerHTML='<h4>\u{1F4F6} Redes encontradas ('+count+')</h4>';
-    return true;
-  }
-  if(line.indexOf('NET|')===0){
-    // Format: NET|ssid|rssi|encrypted
-    var parts=line.split('|');
-    var ssid=parts[1]||'?', rssi=parts[2]||'?', enc=parts[3]==='1';
-    var sr=document.getElementById('wifiScanResults');
-    var div=document.createElement('div');
-    div.className='wifi-net';
-    div.innerHTML='<span><span class="wifi-net-lock">'+(enc?'\u{1F512}':'\u{1F513}')+'</span> <span class="wifi-net-name">'+ssid+'</span></span><span class="wifi-net-rssi">'+rssi+' dBm '+wifiSignalBars(parseInt(rssi))+'</span>';
-    div.onclick=function(){document.getElementById('wifiSSID').value=ssid;addLog('\u2705 Red seleccionada: '+ssid,'success');};
-    sr.appendChild(div);
-    return true;
-  }
-  if(line.indexOf('SCAN_END')===0){
-    wifiWaitingResponse=false;
-    addLog('\u2705 Escaneo WiFi completado','success');
-    return true;
-  }
-  // Parse wifi status
-  if(line.indexOf('WIFIST|')===0){
-    // Format: WIFIST|connected|ssid|ip|rssi|mqtt|saved_ssid
-    var parts=line.split('|');
-    var conn=parts[1]==='1', ssid=parts[2]||'--', ip=parts[3]||'--',
-        rssi=parts[4]||'--', mqttOk=parts[5]==='1', saved=parts[6]||'--';
-    var sb=document.getElementById('wifiStatusBox');
-    sb.style.display='block';
-    sb.innerHTML=
-      '<div>Estado: '+(conn?'<span class="ws-ok">\u2705 Conectado</span>':'<span class="ws-fail">\u274C Desconectado</span>')+'</div>'+
-      '<div>Red: <strong>'+ssid+'</strong></div>'+
-      '<div>IP: <strong>'+ip+'</strong></div>'+
-      '<div>Se\u00F1al: <strong>'+rssi+' dBm</strong> '+wifiSignalBars(parseInt(rssi))+'</div>'+
-      '<div>MQTT: '+(mqttOk?'<span class="ws-ok">\u2705 Conectado</span>':'<span class="ws-fail">\u274C Desconectado</span>')+'</div>'+
-      '<div>Red guardada: <strong>'+saved+'</strong></div>';
-    // Update status bar
-    document.getElementById('dotWifi').className='dot '+(conn?'on':'off');
-    document.getElementById('wifiSt').textContent=conn?ssid:'Off';
-    wifiWaitingResponse=false;
-    addLog('\u{1F4F6} WiFi: '+(conn?ssid+' ('+ip+')':'Desconectado'),'success');
-    return true;
-  }
-  // Parse wifi connect result
-  if(line.indexOf('WIFI_OK|')===0){
-    var parts=line.split('|');
-    var ssid=parts[1]||'', ip=parts[2]||'';
-    var sb=document.getElementById('wifiStatusBox');
-    sb.style.display='block';
-    sb.innerHTML='<span class="ws-ok">\u2705 Conectado a <strong>'+ssid+'</strong></span><br>IP: <strong>'+ip+'</strong><br>Credenciales guardadas en flash \u{1F4BE}';
-    document.getElementById('dotWifi').className='dot on';
-    document.getElementById('wifiSt').textContent=ssid;
-    wifiWaitingResponse=false;
-    addLog('\u2705 WiFi conectado: '+ssid+' ('+ip+')','success');
-    return true;
-  }
-  if(line.indexOf('WIFI_FAIL|')===0){
-    var reason=line.substring(10);
-    var sb=document.getElementById('wifiStatusBox');
-    sb.style.display='block';
-    sb.innerHTML='<span class="ws-fail">\u274C Fallo al conectar</span><br>'+reason;
-    document.getElementById('dotWifi').className='dot off';
-    document.getElementById('wifiSt').textContent='Fallo';
-    wifiWaitingResponse=false;
-    addLog('\u274C WiFi fallo: '+reason,'error');
-    return true;
-  }
-  if(line.indexOf('WIFI_CLEARED')===0){
-    var sb=document.getElementById('wifiStatusBox');
-    sb.style.display='block';
-    sb.innerHTML='\u{1F5D1} Credenciales borradas. Se usar\u00E1 red default al reiniciar.';
-    document.getElementById('dotWifi').className='dot off';
-    document.getElementById('wifiSt').textContent='--';
-    addLog('\u{1F5D1} Credenciales WiFi borradas','warn');
-    return true;
-  }
-  return false;
-}
-
-function wifiSignalBars(rssi){
-  if(isNaN(rssi))return '';
-  if(rssi>-50)return '\u2588\u2588\u2588\u2588';
-  if(rssi>-60)return '\u2588\u2588\u2588\u2581';
-  if(rssi>-70)return '\u2588\u2588\u2581\u2581';
-  return '\u2588\u2581\u2581\u2581';
-}
-
-// ═══════════════════ STATUS ═══════════════════
-function updSt(){
-  document.getElementById('dotMqtt').className='dot '+(isMqtt?'on':'off');
-  document.getElementById('mqttSt').textContent=isMqtt?'On':'Off';
-  document.getElementById('dotBle').className='dot '+(isBle?'on':'off');
-  document.getElementById('bleSt').textContent=isBle?'On':'Off';
-  var bm=document.getElementById('btnMqtt');
-  bm.textContent=isMqtt?'Desconectar MQTT':'Conectar MQTT';
-  bm.className='btn '+(isMqtt?'btn-disconnect':'btn-mqtt');
-  var bb=document.getElementById('btnBle');
-  bb.textContent=isBle?'\u{1F50C} Desconectar BLE':'\u{1F517} Conectar BLE';
-  bb.className='btn '+(isBle?'btn-disconnect':'btn-ble');
-  updateWifiBtns();
-}
-
-// ═══════════════════ LOG ═══════════════════
-function addLog(msg,type){
-  var el=document.getElementById('logList'),d=document.createElement('div');
-  var t=fmtTime(new Date()),cls='';
-  if(type==='success')cls='log-success';else if(type==='error')cls='log-error';else if(type==='warn')cls='log-warn';
-  d.innerHTML='<span class="log-time">['+t+']</span> '+(cls?'<span class="'+cls+'">'+msg+'</span>':msg);
-  el.appendChild(d);el.scrollTop=el.scrollHeight;
-  while(el.children.length>150)el.removeChild(el.firstChild);
-}
-function clearLog(){document.getElementById('logList').innerHTML='';addLog('Log limpiado','');}
-
-// ═══════════════════ INIT ═══════════════════
-window.addEventListener('load',function(){buildCards();buildLimits();initChart();});
-</script>
 </body>
 </html>
 
