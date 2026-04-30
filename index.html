@@ -12,6 +12,7 @@
 <body>
 
   <!-- Aquí va tu contenido del dashboard -->
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -973,7 +974,7 @@
         <input type="range" id="periodRange" min="500" max="20000" value="5000" step="500">
       </div>
 
-      <button id= "applyAutoSettings" class="apply-btn">Aplicar Ajustes</button>
+      
     </div>
   </div>
 
@@ -2188,23 +2189,6 @@ if (mqttClient) {
       };
 
 
-      // botón aplicar (reenvía todos)
-      const applyAutoSettings = document.getElementById("applyAutoSettings");
-      applyAutoSettings.onclick = () => {
-        if (!mqttClient) return;
-      //function applyAutoSettings() {
-
-        //let hystRange = document.getElementById("hystRange").value;
-
-        //mqttClient.publish("cesar/esp32/auto/hyst/state",   hystRange.value);
-        //mqttClient.publish("cesar/esp32/auto/inMin/state",  inMinRange.value);
-        //mqttClient.publish("cesar/esp32/auto/inMax/state",  inMaxRange.value);
-        //mqttClient.publish("cesar/esp32/auto/outMin/state", outMinRange.value);
-        //mqttClient.publish("cesar/esp32/auto/outMax/state", outMaxRange.value);
-        //mqttClient.publish("cesar/esp32/auto/step/state",   stepRange.value);
-        //mqttClient.publish("cesar/esp32/auto/period/state", periodRange.value);
-        addLog("🤖 Ajustes automáticos enviados al ESP32","success");
-      };
     });
   </script>
 
